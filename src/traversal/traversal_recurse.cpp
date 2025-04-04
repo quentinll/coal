@@ -341,7 +341,7 @@ void propagateBVHFrontListCollisionRecurse(CollisionTraversalNodeBase* node,
         }
       }
     }
-    result.updateDistanceLowerBound(sqrt(sqrDistLowerBound));
+    result.updateDistanceLowerBound(Scalar(sqrt(sqrDistLowerBound)));
   }
 
   // clean the old front list (remove invalid node)

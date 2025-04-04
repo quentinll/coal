@@ -459,7 +459,7 @@ class MeshDistanceTraversalNode : public BVHDistanceTraversalNode<BV> {
     else
       d2 = TriangleDistance::sqrTriDistance(t11, t12, t13, t21, t22, t23,
                                             RT._R(), RT._T(), P1, P2);
-    Scalar d = sqrt(d2);
+    Scalar d = Scalar(sqrt(d2));
 
     this->result->update(d, this->model1, this->model2, primitive_id1,
                          primitive_id2, P1, P2, normal);
@@ -503,10 +503,10 @@ class MeshDistanceTraversalNode : public BVHDistanceTraversalNode<BV> {
     init_tri2_points[2] = vertices2[init_tri2[2]];
 
     Vec3s p1, p2, normal;
-    Scalar distance = sqrt(TriangleDistance::sqrTriDistance(
+    Scalar distance = Scalar(sqrt(TriangleDistance::sqrTriDistance(
         init_tri1_points[0], init_tri1_points[1], init_tri1_points[2],
         init_tri2_points[0], init_tri2_points[1], init_tri2_points[2], RT._R(),
-        RT._T(), p1, p2));
+        RT._T(), p1, p2)));
 
     result->update(distance, model1, model2, init_tri_id1, init_tri_id2, p1, p2,
                    normal);

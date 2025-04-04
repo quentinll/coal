@@ -65,7 +65,8 @@ std::vector<Vec3s> getBoundVertices(const Sphere& sphere,
                                     const Transform3s& tf) {
   std::vector<Vec3s> result(12);
   const Scalar m = (1 + sqrt(Scalar(5))) / Scalar(2);
-  Scalar edge_size = sphere.radius * 6 / (sqrt(Scalar(27)) + sqrt(Scalar(15)));
+  Scalar edge_size =
+      sphere.radius * 6 / Scalar(sqrt(Scalar(27)) + sqrt(Scalar(15)));
 
   Scalar a = edge_size;
   Scalar b = m * edge_size;
@@ -89,9 +90,9 @@ std::vector<Vec3s> getBoundVertices(const Sphere& sphere,
 std::vector<Vec3s> getBoundVertices(const Ellipsoid& ellipsoid,
                                     const Transform3s& tf) {
   std::vector<Vec3s> result(12);
-  const Scalar phi = (1 + sqrt(Scalar(5))) / Scalar(2);
+  const Scalar phi = Scalar(1 + sqrt(Scalar(5))) / Scalar(2);
 
-  const Scalar a = sqrt(Scalar(3)) / (phi * phi);
+  const Scalar a = Scalar(sqrt(3)) / (phi * phi);
   const Scalar b = phi * a;
 
   const Scalar& A = ellipsoid.radii[0];
@@ -123,13 +124,13 @@ std::vector<Vec3s> getBoundVertices(const Ellipsoid& ellipsoid,
 std::vector<Vec3s> getBoundVertices(const Capsule& capsule,
                                     const Transform3s& tf) {
   std::vector<Vec3s> result(36);
-  const Scalar m = (1 + sqrt(Scalar(5))) / Scalar(2);
+  const Scalar m = Scalar((1 + sqrt(5))) / Scalar(2);
 
   Scalar hl = capsule.halfLength;
-  Scalar edge_size = capsule.radius * 6 / (sqrt(Scalar(27)) + sqrt(Scalar(15)));
+  Scalar edge_size = capsule.radius * 6 / (Scalar(sqrt(27)) + Scalar(sqrt(15)));
   Scalar a = edge_size;
   Scalar b = m * edge_size;
-  Scalar r2 = capsule.radius * 2 / sqrt(Scalar(3));
+  Scalar r2 = capsule.radius * 2 / Scalar(sqrt(3));
 
   result[0] = tf.transform(Vec3s(0, a, b + hl));
   result[1] = tf.transform(Vec3s(0, -a, b + hl));
@@ -180,7 +181,7 @@ std::vector<Vec3s> getBoundVertices(const Cone& cone, const Transform3s& tf) {
   std::vector<Vec3s> result(7);
 
   Scalar hl = cone.halfLength;
-  Scalar r2 = cone.radius * 2 / sqrt(Scalar(3));
+  Scalar r2 = cone.radius * 2 / Scalar(sqrt(3));
   Scalar a = Scalar(0.5) * r2;
   Scalar b = cone.radius;
 
@@ -201,7 +202,7 @@ std::vector<Vec3s> getBoundVertices(const Cylinder& cylinder,
   std::vector<Vec3s> result(12);
 
   Scalar hl = cylinder.halfLength;
-  Scalar r2 = cylinder.radius * 2 / sqrt(Scalar(3));
+  Scalar r2 = cylinder.radius * 2 / Scalar(sqrt(3));
   Scalar a = Scalar(0.5) * r2;
   Scalar b = cylinder.radius;
 
@@ -334,12 +335,12 @@ void computeBV<AABB, Cone>(const Cone& s, const Transform3s& tf, AABB& bv) {
   const Matrix3s& R = tf.getRotation();
   const Vec3s& T = tf.getTranslation();
 
-  Scalar x_range = fabs(R(0, 0) * s.radius) + fabs(R(0, 1) * s.radius) +
-                   fabs(R(0, 2) * s.halfLength);
-  Scalar y_range = fabs(R(1, 0) * s.radius) + fabs(R(1, 1) * s.radius) +
-                   fabs(R(1, 2) * s.halfLength);
-  Scalar z_range = fabs(R(2, 0) * s.radius) + fabs(R(2, 1) * s.radius) +
-                   fabs(R(2, 2) * s.halfLength);
+  Scalar x_range = Scalar(fabs(R(0, 0) * s.radius) + fabs(R(0, 1) * s.radius) +
+                          fabs(R(0, 2) * s.halfLength));
+  Scalar y_range = Scalar(fabs(R(1, 0) * s.radius) + fabs(R(1, 1) * s.radius) +
+                          fabs(R(1, 2) * s.halfLength));
+  Scalar z_range = Scalar(fabs(R(2, 0) * s.radius) + fabs(R(2, 1) * s.radius) +
+                          fabs(R(2, 2) * s.halfLength));
 
   Vec3s v_delta(x_range, y_range, z_range);
   bv.max_ = T + v_delta;
@@ -352,12 +353,12 @@ void computeBV<AABB, Cylinder>(const Cylinder& s, const Transform3s& tf,
   const Matrix3s& R = tf.getRotation();
   const Vec3s& T = tf.getTranslation();
 
-  Scalar x_range = fabs(R(0, 0) * s.radius) + fabs(R(0, 1) * s.radius) +
-                   fabs(R(0, 2) * s.halfLength);
-  Scalar y_range = fabs(R(1, 0) * s.radius) + fabs(R(1, 1) * s.radius) +
-                   fabs(R(1, 2) * s.halfLength);
-  Scalar z_range = fabs(R(2, 0) * s.radius) + fabs(R(2, 1) * s.radius) +
-                   fabs(R(2, 2) * s.halfLength);
+  Scalar x_range = Scalar(fabs(R(0, 0) * s.radius) + fabs(R(0, 1) * s.radius) +
+                          fabs(R(0, 2) * s.halfLength));
+  Scalar y_range = Scalar(fabs(R(1, 0) * s.radius) + fabs(R(1, 1) * s.radius) +
+                          fabs(R(1, 2) * s.halfLength));
+  Scalar z_range = Scalar(fabs(R(2, 0) * s.radius) + fabs(R(2, 1) * s.radius) +
+                          fabs(R(2, 2) * s.halfLength));
 
   Vec3s v_delta(x_range, y_range, z_range);
   bv.max_ = T + v_delta;

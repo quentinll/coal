@@ -45,7 +45,7 @@ namespace coal {
 
 static const Scalar kIOS_RATIO = 1.5;
 static const Scalar invSinA = 2;
-static const Scalar cosA = sqrt(Scalar(3)) / Scalar(2);
+static const Scalar cosA = Scalar(sqrt(3)) / Scalar(2);
 
 static inline void axisFromEigen(Vec3s eigenV[3], Scalar eigenS[3],
                                  Matrix3s& axes) {
@@ -336,7 +336,7 @@ void fitn(Vec3s* ps, unsigned int n, kIOS& bv) {
   bv.spheres[0].r = r0;
 
   if (bv.num_spheres >= 3) {
-    Scalar r10 = sqrt(r0 * r0 - extent[2] * extent[2]) * invSinA;
+    Scalar r10 = Scalar(sqrt(r0 * r0 - extent[2] * extent[2])) * invSinA;
     Vec3s delta = axes.col(2) * (r10 * cosA - extent[2]);
     bv.spheres[1].o = center - delta;
     bv.spheres[2].o = center + delta;
@@ -596,7 +596,7 @@ kIOS BVFitter<kIOS>::fit(unsigned int* primitive_indices,
   bv.spheres[0].r = r0;
 
   if (bv.num_spheres >= 3) {
-    Scalar r10 = sqrt(r0 * r0 - extent[2] * extent[2]) * invSinA;
+    Scalar r10 = Scalar(sqrt(r0 * r0 - extent[2] * extent[2])) * invSinA;
     Vec3s delta = axes.col(2) * (r10 * cosA - extent[2]);
     bv.spheres[1].o = center - delta;
     bv.spheres[2].o = center + delta;

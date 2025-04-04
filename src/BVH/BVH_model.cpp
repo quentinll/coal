@@ -793,7 +793,7 @@ void BVHModelBase::computeLocalAABB() {
     if (r > aabb_radius) aabb_radius = r;
   }
 
-  aabb_radius = sqrt(aabb_radius);
+  aabb_radius = Scalar(sqrt(aabb_radius));
 
   aabb_local = aabb_;
 }

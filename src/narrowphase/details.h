@@ -815,7 +815,7 @@ inline Scalar capsuleBoxDistance(const Capsule& capsule, const Transform3s& tf1,
 
     if (dist < bestdist) {
       bestdist = dist;
-      bestsegmentpos = i;
+      bestsegmentpos = Scalar(i);
       cltype = -2 + i;
       clface = c2;
     }

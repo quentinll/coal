@@ -319,8 +319,8 @@ if (sinus2 < 1e-6) return false;
 
 const Scalar s = T[ka] * B(ja, ib) - T[ja] * B(ka, ib);
 
-const Scalar diff = fabs(s) - (a[ja] * Bf(ka, ib) + a[ka] * Bf(ja, ib) +
-                               b[jb] * Bf(ia, kb) + b[kb] * Bf(ia, jb));
+const Scalar diff = Scalar(fabs(s)) - (a[ja] * Bf(ka, ib) + a[ka] * Bf(ja, ib) +
+                                       b[jb] * Bf(ia, kb) + b[kb] * Bf(ia, jb));
 // We need to divide by the norm || Aia x Bib ||
 // As ||Aia|| = ||Bib|| = 1, (Aia | Bib)^2  = cosine^2
 if (diff > 0) {

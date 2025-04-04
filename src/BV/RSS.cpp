@@ -793,7 +793,7 @@ RSS& RSS::operator+=(const Vec3s& p) {
   Scalar proj0 = local_p.dot(axes.col(0));
   Scalar proj1 = local_p.dot(axes.col(1));
   Scalar proj2 = local_p.dot(axes.col(2));
-  Scalar abs_proj2 = fabs(proj2);
+  Scalar abs_proj2 = Scalar(fabs(proj2));
   Vec3s proj(proj0, proj1, proj2);
 
   // projection is within the rectangle
@@ -819,12 +819,12 @@ RSS& RSS::operator+=(const Vec3s& p) {
       ;  // do nothing
     else {
       if (abs_proj2 < radius) {
-        Scalar delta_y =
-            -std::sqrt(radius * radius - proj2 * proj2) + fabs(proj1 - y);
+        Scalar delta_y = -Scalar(std::sqrt(radius * radius - proj2 * proj2) +
+                                 fabs(proj1 - y));
         length[1] += delta_y;
         if (proj1 < 0) Tr[1] -= delta_y;
       } else {
-        Scalar delta_y = fabs(proj1 - y);
+        Scalar delta_y = Scalar(fabs(proj1 - y));
         length[1] += delta_y;
         if (proj1 < 0) Tr[1] -= delta_y;
 
@@ -844,8 +844,8 @@ RSS& RSS::operator+=(const Vec3s& p) {
       ;  // do nothing
     else {
       if (abs_proj2 < radius) {
-        Scalar delta_x =
-            -std::sqrt(radius * radius - proj2 * proj2) + fabs(proj0 - x);
+        Scalar delta_x = -Scalar(std::sqrt(radius * radius - proj2 * proj2) +
+                                 fabs(proj0 - x));
         length[0] += delta_x;
         if (proj0 < 0) Tr[0] -= delta_x;
       } else {
@@ -869,11 +869,12 @@ RSS& RSS::operator+=(const Vec3s& p) {
       ;  // do nothing
     else {
       if (abs_proj2 < radius) {
-        Scalar diag = std::sqrt(new_r_sqr - proj2 * proj2);
-        Scalar delta_diag = -std::sqrt(radius * radius - proj2 * proj2) + diag;
+        Scalar diag = Scalar(std::sqrt(new_r_sqr - proj2 * proj2));
+        Scalar delta_diag =
+            -Scalar(std::sqrt(radius * radius - proj2 * proj2)) + diag;
 
-        Scalar delta_x = delta_diag / diag * fabs(proj0 - x);
-        Scalar delta_y = delta_diag / diag * fabs(proj1 - y);
+        Scalar delta_x = delta_diag / diag * Scalar(fabs(proj0 - x));
+        Scalar delta_y = delta_diag / diag * Scalar(fabs(proj1 - y));
         length[0] += delta_x;
         length[1] += delta_y;
 
@@ -882,8 +883,8 @@ RSS& RSS::operator+=(const Vec3s& p) {
           Tr[1] -= delta_y;
         }
       } else {
-        Scalar delta_x = fabs(proj0 - x);
-        Scalar delta_y = fabs(proj1 - y);
+        Scalar delta_x = Scalar(fabs(proj0 - x));
+        Scalar delta_y = Scalar(fabs(proj1 - y));
 
         length[0] += delta_x;
         length[1] += delta_y;
