@@ -285,6 +285,18 @@ BOOST_AUTO_TEST_CASE(test_normal_and_nearest_points_sphere_box) {
   }
 }
 
+BOOST_AUTO_TEST_CASE(test_normal_and_nearest_points_capsule_box) {
+  for (size_t i = 0; i < 10; ++i) {
+    Scalar h = generateRandomNumber(Scalar(0.15), 1);
+    shared_ptr<Box> o1(new Box(generateRandomVector<3>(Scalar(0.05), 1)));
+    shared_ptr<Capsule> o2(
+        new Capsule(generateRandomNumber(Scalar(0.05), 1), h));
+
+    test_normal_and_nearest_points(*o1.get(), *o2.get());
+    test_normal_and_nearest_points(*o2.get(), *o1.get());
+  }
+}
+
 BOOST_AUTO_TEST_CASE(test_normal_and_nearest_points_mesh_mesh) {
   for (size_t i = 0; i < 10; ++i) {
     Convex<Triangle> o1_ = constructPolytopeFromEllipsoid(
