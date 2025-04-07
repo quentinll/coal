@@ -1122,8 +1122,7 @@ skip:
   // Create sphere in original orientation at first contact point
   tmp1 = pos + halfaxis * bestsegmentpos;
   tmp2.noalias() = tf2.rotation() * tmp1 + tf2.translation();
-
-  Sphere sphere(tmp2(0));
+  Sphere sphere(capsule.radius);
   const Scalar res = boxSphereDistance(box, tf2, sphere, tf1, p2, p1, normal);
   normal *= -1;
 
