@@ -746,7 +746,7 @@ inline Vec3s pointBoxQuery(const Vec3s& p, const Vec3s& b) {
 /// @param b The box half extents
 /// @param[out] closest The closest point on the face
 /// @param[out] t The parameter along the line
-inline void lineFaceQuery(const Vec3s& i, const Vec3s& o, const Vec3s& d,
+inline void lineFaceQuery(const Vec3i& i, const Vec3s& o, const Vec3s& d,
                           const Vec3s& b, Vec3s& closest, Scalar& t) {
   Vec3s PmE = o - b;
   Vec3s PpE = o + b;
@@ -851,7 +851,7 @@ inline void lineFaceQuery(const Vec3s& i, const Vec3s& o, const Vec3s& d,
     }
   }
 
-  Vec3s map;
+  Vec3i map;
   map[i[0]] = 0;
   map[i[1]] = 1;
   map[i[2]] = 2;
@@ -879,18 +879,18 @@ inline void lineBoxQuery(const Vec3s& o, const Vec3s& d, const Vec3s& b,
   Vec3s PmE = o_reflected - b;
 
   // face indices
-  Vec3s i;
+  Vec3i i;
 
   // line intersects planes x or z
   if (d_reflected[1] * PmE[0] >= d_reflected[0] * PmE[1])
     // line intersects x = e0 if true, z = e2 if false
-    i = (d_reflected[2] * PmE[0] >= d_reflected[0] * PmE[2]) ? Vec3s(0, 1, 2)
-                                                             : Vec3s(2, 0, 1);
+    i = (d_reflected[2] * PmE[0] >= d_reflected[0] * PmE[2]) ? Vec3i(0, 1, 2)
+                                                             : Vec3i(2, 0, 1);
   // line intersects planes y or z
   else
     // line intersects y = e1 if true, z = e2 if false
-    i = (d_reflected[2] * PmE[1] >= d_reflected[1] * PmE[2]) ? Vec3s(1, 2, 0)
-                                                             : Vec3s(2, 0, 1);
+    i = (d_reflected[2] * PmE[1] >= d_reflected[1] * PmE[2]) ? Vec3i(1, 2, 0)
+                                                             : Vec3i(2, 0, 1);
 
   // Query closest point on face
   lineFaceQuery(i, o_reflected, d_reflected, b, closest, t);

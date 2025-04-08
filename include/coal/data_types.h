@@ -76,6 +76,7 @@ typedef Eigen::Matrix<Scalar, Eigen::Dynamic, 3, Eigen::RowMajor> MatrixX3s;
 typedef Eigen::Matrix<Scalar, Eigen::Dynamic, 2, Eigen::RowMajor> MatrixX2s;
 typedef Eigen::Matrix<Eigen::DenseIndex, Eigen::Dynamic, 3, Eigen::RowMajor>
     Matrixx3i;
+typedef Eigen::Matrix<Eigen::DenseIndex, 3, 1> Vec3i;
 typedef Eigen::Matrix<Scalar, Eigen::Dynamic, Eigen::Dynamic> MatrixXs;
 typedef Eigen::Vector2i support_func_guess_t;
 
