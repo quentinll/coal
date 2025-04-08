@@ -951,18 +951,27 @@ inline Scalar segmentBoxDistance(const LineSegment& s1, const Transform3s& tf1,
   Scalar t;
   segmentBoxQuery(s, e, s2.halfSide, p2, t);
   p1 = s + (e - s) * t;
-
-  // Transform back to world frame
-  p1 = tf2.rotation() * p1 + tf2.translation();
-  p2 = tf2.rotation() * p2 + tf2.translation();
-
+  // TODO: avoid this boolean computation as the info may be already available
+  bool is_in_box = (p1.array().abs() <= s2.halfSide.array()).all();
   // Compute normal and distance
   normal = p2 - p1;
   Scalar dist = normal.norm();
-  if (dist > Eigen::NumTraits<Scalar>::epsilon())
+  if (is_in_box) dist *= Scalar(-1);
+  if (std::abs(dist) > Eigen::NumTraits<Scalar>::epsilon())
     normal /= dist;
-  else
-    normal = Vec3s(1, 0, 0);
+  else {
+    // We determine on which face(s) p2 is
+    // TODO: this could also be avoided by using previously computed info
+    normal = ((s2.halfSide - p2.cwiseAbs()).array() <
+              Eigen::NumTraits<Scalar>::epsilon())
+                 .cast<Scalar>();
+    normal.normalize();
+    normal.array() *= -p2.array().sign();
+  }
+  // Transform back to world frame
+  p1 = tf2.rotation() * p1 + tf2.translation();
+  p2 = tf2.rotation() * p2 + tf2.translation();
+  normal = tf2.rotation() * normal;
 
   return dist;
 }
