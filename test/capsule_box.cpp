@@ -143,8 +143,6 @@ BOOST_AUTO_TEST_CASE(contact_points_sphere_box) {
   using coal::CollisionGeometryPtr_t;
   // We use a capsule of radius 1 and height 0 to represent a sphere
   CollisionGeometryPtr_t capsuleGeometry(new coal::Capsule(1., 0.));
-  // // We use an actual sphere of radius 1 for checking the result
-  // CollisionGeometryPtr_t sphereGeometry(new coal::Sphere(1.));
   // Box of size 1 by 1 by 1
   CollisionGeometryPtr_t boxGeometry(new coal::Box(1., 1., 1.));
 
@@ -165,10 +163,10 @@ BOOST_AUTO_TEST_CASE(contact_points_sphere_box) {
   coal::Vec3s o1(distanceResult.nearest_points[0]);
   // Nearest point on box
   coal::Vec3s o2(distanceResult.nearest_points[1]);
-  std::cout << "distanceResult.min_distance: " << distanceResult.min_distance
-            << std::endl;
-  std::cout << "o1: " << o1.transpose() << std::endl;
-  std::cout << "o2: " << o2.transpose() << std::endl;
+  // std::cout << "distanceResult.min_distance: " << distanceResult.min_distance
+  //           << std::endl;
+  // std::cout << "o1: " << o1.transpose() << std::endl;
+  // std::cout << "o2: " << o2.transpose() << std::endl;
   BOOST_CHECK_CLOSE(distanceResult.min_distance, -0.1, 1e-1);
   BOOST_CHECK_CLOSE(o1[0], 0.4, 1e-1);
   CHECK_CLOSE_TO_0(o1[1], 1e-1);
@@ -184,10 +182,10 @@ BOOST_AUTO_TEST_CASE(contact_points_sphere_box) {
   coal::distance(&capsule, &box, distanceRequest, distanceResult);
   o1 = distanceResult.nearest_points[0];
   o2 = distanceResult.nearest_points[1];
-  std::cout << "distanceResult.min_distance: " << distanceResult.min_distance
-            << std::endl;
-  std::cout << "o1: " << o1.transpose() << std::endl;
-  std::cout << "o2: " << o2.transpose() << std::endl;
+  // std::cout << "distanceResult.min_distance: " << distanceResult.min_distance
+  //           << std::endl;
+  // std::cout << "o1: " << o1.transpose() << std::endl;
+  // std::cout << "o2: " << o2.transpose() << std::endl;
 
   BOOST_CHECK_CLOSE(distanceResult.min_distance, -0.1, 1e-1);
   CHECK_CLOSE_TO_0(o1[0], 1e-1);
@@ -207,10 +205,10 @@ BOOST_AUTO_TEST_CASE(contact_points_sphere_box) {
   coal::distance(&capsule, &box, distanceRequest, distanceResult);
   o1 = distanceResult.nearest_points[0];
   o2 = distanceResult.nearest_points[1];
-  std::cout << "distanceResult.min_distance: " << distanceResult.min_distance
-            << std::endl;
-  std::cout << "o1: " << o1.transpose() << std::endl;
-  std::cout << "o2: " << o2.transpose() << std::endl;
+  // std::cout << "distanceResult.min_distance: " << distanceResult.min_distance
+  //           << std::endl;
+  // std::cout << "o1: " << o1.transpose() << std::endl;
+  // std::cout << "o2: " << o2.transpose() << std::endl;
   BOOST_CHECK_CLOSE(distanceResult.min_distance, -0.1, 1e-1);
   BOOST_CHECK_CLOSE(o1[0], 0.5 + std::sqrt(0.405) - std::sqrt(0.5), 1e-1);
   BOOST_CHECK_CLOSE(o1[1], 0.5 + std::sqrt(0.405) - std::sqrt(0.5), 1e-1);
@@ -227,10 +225,10 @@ BOOST_AUTO_TEST_CASE(contact_points_sphere_box) {
   coal::distance(&capsule, &box, distanceRequest, distanceResult);
   o1 = distanceResult.nearest_points[0];
   o2 = distanceResult.nearest_points[1];
-  std::cout << "distanceResult.min_distance: " << distanceResult.min_distance
-            << std::endl;
-  std::cout << "o1: " << o1.transpose() << std::endl;
-  std::cout << "o2: " << o2.transpose() << std::endl;
+  // std::cout << "distanceResult.min_distance: " << distanceResult.min_distance
+  //           << std::endl;
+  // std::cout << "o1: " << o1.transpose() << std::endl;
+  // std::cout << "o2: " << o2.transpose() << std::endl;
 
   BOOST_CHECK_CLOSE(distanceResult.min_distance, -0.1, 1e-1);
   BOOST_CHECK_CLOSE(o1[0], 0.5 + std::sqrt(0.27) - std::sqrt(1. / 3.), 1e-1);
@@ -239,6 +237,9 @@ BOOST_AUTO_TEST_CASE(contact_points_sphere_box) {
   BOOST_CHECK_CLOSE(o2[0], 0.5, 1e-1);
   BOOST_CHECK_CLOSE(o2[1], 0.5, 1e-1);
   BOOST_CHECK_CLOSE(o2[2], 0.5, 1e-1);
+
+  // // We use an actual sphere of radius 1 for checking the result
+  // CollisionGeometryPtr_t sphereGeometry(new coal::Sphere(1.));
 
   // // Using results from sphere to check the result
   // sphere.setTransform(tf1);

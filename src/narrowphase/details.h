@@ -724,409 +724,276 @@ inline Scalar computePenetration(const Vec3s& P1, const Vec3s& P2,
                             globalQ3, normal);
 }
 
-// inline Scalar capsuleBox(Contact* con, double margin, const Eigen::Vector3d&
-// pos1,
-//                const Eigen::Matrix3d& mat1, const Eigen::Vector3d& size1,
-//                const Eigen::Vector3d& pos2, const Eigen::Matrix3d& mat2,
-//                const Eigen::Vector3d& size2) {
+/// @brief Returns the closest point from a 3D point to a 3D box
+/// @param p The query point
+/// @param b The box half extents
+/// @return The closest point on the box to p
+inline Vec3s pointBoxQuery(const Vec3s& p, const Vec3s& b) {
+  Vec3s closest = p;
+  for (int i = 0; i < 3; ++i) {
+    if (p[i] < -b[i])
+      closest[i] = -b[i];
+    else if (p[i] > b[i])
+      closest[i] = b[i];
+  }
+  return closest;
+}
+
+/// @brief Returns the closest point from an infinite 3D line to a 3D box face
+/// @param i The face indices
+/// @param o The origin of the line
+/// @param d The direction of the line
+/// @param b The box half extents
+/// @param[out] closest The closest point on the face
+/// @param[out] t The parameter along the line
+inline void lineFaceQuery(const Vec3s& i, const Vec3s& o, const Vec3s& d,
+                          const Vec3s& b, Vec3s& closest, Scalar& t) {
+  Vec3s PmE = o - b;
+  Vec3s PpE = o + b;
+
+  Vec3s bi(b[i[0]], b[i[1]], b[i[2]]);
+  Vec3s oi(o[i[0]], o[i[1]], o[i[2]]);
+  Vec3s di(d[i[0]], d[i[1]], d[i[2]]);
+  Vec3s PmEi(PmE[i[0]], PmE[i[1]], PmE[i[2]]);
+  Vec3s PpEi(PpE[i[0]], PpE[i[1]], PpE[i[2]]);
+
+  Vec3s c;
+  if (di[0] * PpEi[1] >= di[1] * PmEi[0]) {
+    if (di[0] * PpEi[2] >= di[2] * PmEi[0]) {
+      // v[i1] >= -e[i1], v[i2] >= -e[i2] (distance = 0)
+      c = Vec3s(bi[0], oi[1] - di[1] * PmEi[0] / di[0],
+                oi[2] - di[2] * PmEi[0] / di[0]);
+      t = -PmEi[0] / di[0];
+    } else {
+      // v[i1] >= -e[i1], v[i2] < -e[i2]
+      Scalar lenSqr = di[0] * di[0] + di[2] * di[2];
+      Scalar tmp =
+          lenSqr * PpEi[1] - di[1] * (di[0] * PmEi[0] + di[2] * PpEi[2]);
+      if (tmp <= 2. * lenSqr * bi[1]) {
+        Scalar t_tmp = tmp / lenSqr;
+        lenSqr += di[1] * di[1];
+        tmp = PpEi[1] - t_tmp;
+        Scalar delta = di[0] * PmEi[0] + di[1] * tmp + di[2] * PpEi[2];
+        c = Vec3s(bi[0], t_tmp - bi[1], -bi[2]);
+        t = -delta / lenSqr;
+      } else {
+        lenSqr += di[1] * di[1];
+        Scalar delta = di[0] * PmEi[0] + di[1] * PmEi[1] + di[2] * PpEi[2];
+        c = Vec3s(bi[0], bi[1], -bi[2]);
+        t = -delta / lenSqr;
+      }
+    }
+  } else {
+    if (di[0] * PpEi[2] >= di[2] * PmEi[0]) {
+      // v[i1] < -e[i1], v[i2] >= -e[i2]
+      Scalar lenSqr = di[0] * di[0] + di[1] * di[1];
+      Scalar tmp =
+          lenSqr * PpEi[2] - di[2] * (di[0] * PmEi[0] + di[1] * PpEi[1]);
+      if (tmp <= 2. * lenSqr * bi[2]) {
+        Scalar t_tmp = tmp / lenSqr;
+        lenSqr += di[2] * di[2];
+        tmp = PpEi[2] - t_tmp;
+        Scalar delta = di[0] * PmEi[0] + di[1] * PpEi[1] + di[2] * tmp;
+        c = Vec3s(bi[0], -bi[1], t_tmp - bi[2]);
+        t = -delta / lenSqr;
+      } else {
+        lenSqr += di[2] * di[2];
+        Scalar delta = di[0] * PmEi[0] + di[1] * PpEi[1] + di[2] * PmEi[2];
+        c = Vec3s(bi[0], -bi[1], bi[2]);
+        t = -delta / lenSqr;
+      }
+    } else {
+      // v[i1] < -e[i1], v[i2] < -e[i2]
+      Scalar lenSqr = di[0] * di[0] + di[2] * di[2];
+      Scalar tmp =
+          lenSqr * PpEi[1] - di[1] * (di[0] * PmEi[0] + di[2] * PpEi[2]);
+      if (tmp >= 0.) {
+        // v[i1]-edge is c
+        if (tmp <= 2. * lenSqr * bi[1]) {
+          Scalar t_tmp = tmp / lenSqr;
+          lenSqr += di[1] * di[1];
+          tmp = PpEi[1] - t_tmp;
+          Scalar delta = di[0] * PmEi[0] + di[1] * tmp + di[2] * PpEi[2];
+          c = Vec3s(bi[0], t_tmp - bi[1], -bi[2]);
+          t = -delta / lenSqr;
+        } else {
+          lenSqr += di[1] * di[1];
+          Scalar delta = di[0] * PmEi[0] + di[1] * PmEi[1] + di[2] * PpEi[2];
+          c = Vec3s(bi[0], bi[1], -bi[2]);
+          t = -delta / lenSqr;
+        }
+      } else {
+        lenSqr = di[0] * di[0] + di[1] * di[1];
+        tmp = lenSqr * PpEi[2] - di[2] * (di[0] * PmEi[0] + di[1] * PpEi[1]);
+        if (tmp >= 0.) {
+          // v[i2]-edge is c
+          if (tmp <= 2. * lenSqr * bi[2]) {
+            Scalar t_tmp = tmp / lenSqr;
+            lenSqr += di[2] * di[2];
+            tmp = PpEi[2] - t_tmp;
+            Scalar delta = di[0] * PmEi[0] + di[1] * PpEi[1] + di[2] * tmp;
+            c = Vec3s(bi[0], -bi[1], t_tmp - bi[2]);
+            t = -delta / lenSqr;
+          } else {
+            lenSqr += di[2] * di[2];
+            Scalar delta = di[0] * PmEi[0] + di[1] * PpEi[1] + di[2] * PmEi[2];
+            c = Vec3s(bi[0], -bi[1], bi[2]);
+            t = -delta / lenSqr;
+          }
+        } else {
+          // (v[i1],v[i2])-corner is c
+          lenSqr += di[2] * di[2];
+          Scalar delta = di[0] * PmEi[0] + di[1] * PpEi[1] + di[2] * PpEi[2];
+          c = Vec3s(bi[0], -bi[1], -bi[2]);
+          t = -delta / lenSqr;
+        }
+      }
+    }
+  }
+
+  Vec3s map;
+  map[i[0]] = 0;
+  map[i[1]] = 1;
+  map[i[2]] = 2;
+  closest = Vec3s(c[map[0]], c[map[1]], c[map[2]]);
+}
+
+/// @brief Returns the closest point from an infinite 3D line to a 3D box
+/// @param o The origin of the line
+/// @param d The direction of the line
+/// @param b The box half extents
+/// @param[out] closest The closest point on the box
+/// @param[out] t The parameter along the line
+inline void lineBoxQuery(const Vec3s& o, const Vec3s& d, const Vec3s& b,
+                         Vec3s& closest, Scalar& t) {
+  // Transform the line direction to the first octant using reflections
+  // Vec3s reflected = (d.array() < 0).select(-1, 1);
+  Vec3s reflected = Vec3s::Ones();
+  for (int i = 0; i < 3; ++i) {
+    if (d[i] < 0) reflected[i] = -1;
+  }
+  Vec3s o_reflected = o.cwiseProduct(reflected);
+  Vec3s d_reflected = d.cwiseProduct(reflected);
+
+  // point minus extent
+  Vec3s PmE = o_reflected - b;
+
+  // face indices
+  Vec3s i;
+
+  // line intersects planes x or z
+  if (d_reflected[1] * PmE[0] >= d_reflected[0] * PmE[1])
+    // line intersects x = e0 if true, z = e2 if false
+    i = (d_reflected[2] * PmE[0] >= d_reflected[0] * PmE[2]) ? Vec3s(0, 1, 2)
+                                                             : Vec3s(2, 0, 1);
+  // line intersects planes y or z
+  else
+    // line intersects y = e1 if true, z = e2 if false
+    i = (d_reflected[2] * PmE[1] >= d_reflected[1] * PmE[2]) ? Vec3s(1, 2, 0)
+                                                             : Vec3s(2, 0, 1);
+
+  // Query closest point on face
+  lineFaceQuery(i, o_reflected, d_reflected, b, closest, t);
+
+  // Account for previously applied reflections
+  closest = closest.cwiseProduct(reflected);
+}
+
+/// @brief Returns the closest point from a finite 3D segment to a 3D box
+/// @param s The start of the segment
+/// @param e The end of the segment
+/// @param b The box half extents
+/// @param[out] closest The closest point on the box
+/// @param[out] t The parameter along the segment
+inline void segmentBoxQuery(const Vec3s& s, const Vec3s& e, const Vec3s& b,
+                            Vec3s& closest, Scalar& t) {
+  Vec3s o = s;
+  Vec3s d = e - s;
+  Scalar t_line;
+  lineBoxQuery(o, d, b, closest, t_line);
+
+  // If closest is within the segment, return that result directly
+  if (t_line >= 0. && t_line <= 1.) {
+    t = t_line;
+    return;
+  }
+
+  // Otherwise, compute the closest point to either side of the segment
+  t = (t_line < 0.) ? 0. : 1.;
+  closest = pointBoxQuery(o + d * t, b);
+}
+
+/// @brief A line segment defined by two endpoints
+struct LineSegment {
+  Vec3s a;  ///< First endpoint
+  Vec3s b;  ///< Second endpoint
+};
+
+/// @brief Computes the distance between a line segment and a box
+/// @param s1 The line segment
+/// @param tf1 The transform of the line segment
+/// @param s2 The box
+/// @param tf2 The transform of the box
+/// @param[out] p1 The closest point on the line segment
+/// @param[out] p2 The closest point on the box
+/// @param[out] normal The normal vector from box to segment
+/// @return The distance between the shapes (negative if penetration)
+inline Scalar segmentBoxDistance(const LineSegment& s1, const Transform3s& tf1,
+                                 const Box& s2, const Transform3s& tf2,
+                                 Vec3s& p1, Vec3s& p2, Vec3s& normal) {
+  // Transform segment to box frame
+  Vec3s s =
+      tf2.rotation().transpose() * (tf1.transform(s1.a) - tf2.translation());
+  Vec3s e =
+      tf2.rotation().transpose() * (tf1.transform(s1.b) - tf2.translation());
+
+  // Get closest points
+  Scalar t;
+  segmentBoxQuery(s, e, s2.halfSide, p2, t);
+  p1 = s + (e - s) * t;
+
+  // Transform back to world frame
+  p1 = tf2.rotation() * p1 + tf2.translation();
+  p2 = tf2.rotation() * p2 + tf2.translation();
+
+  // Compute normal and distance
+  normal = p2 - p1;
+  Scalar dist = normal.norm();
+  if (dist > Eigen::NumTraits<Scalar>::epsilon())
+    normal /= dist;
+  else
+    normal = Vec3s(1, 0, 0);
+
+  return dist;
+}
 
 inline Scalar capsuleBoxDistance(const Capsule& capsule, const Transform3s& tf1,
                                  const Box& box, const Transform3s& tf2,
                                  Vec3s& p1, Vec3s& p2, Vec3s& normal) {
-  // Temporary variables
-  Vec3s tmp1, tmp2, tmp3, halfaxis, axis, dif;
-  Vec3s pos;  // position of capsule in box-local frame
+  // Create a line segment from the capsule's endpoints
+  LineSegment segment;
+  segment.a = Vec3s(0, 0, -capsule.halfLength);
+  segment.b = Vec3s(0, 0, capsule.halfLength);
 
-  Scalar halflength;      // half of capsule's length
-  Scalar bestdist;        // closest contact point distance
-  Scalar bestdistmax;     // init value for bestdist
-  Scalar bestsegmentpos;  // between -1 and 1 : which point on the segment is
-                          // closest to the box
-  Scalar secondpos;  // distance of 2nd contact position on capsule segment from
-                     // the first
-  Scalar dist;
-  Scalar bestboxpos;  // closest contact point, position on the box's edge
-  Scalar mul, e1, e2, dp, de;
+  // Calculate segment-box distance
+  Scalar dist = segmentBoxDistance(segment, tf1, box, tf2, p1, p2, normal);
 
-  Scalar ma, mb, mc, u, v, det, x1, x2, idet;  // linelinedist temps
+  // Adjust the distance by the capsule's radius
+  dist -= capsule.radius;
 
-  int s1, s2;        // hold linelinedist info
-  int i, j, c1, c2;  // temporary variables
-  int cltype = -4;   // closest type
-  int clface;        // closest face
-  int clcorner = 0;  // closest corner (0..7 in binary)
-  int cledge;        // closest edge axis
-  int axisdir;       // direction of capsule axis in relation to the box
-  int ax1, ax2, ax;  // axis temporaries
+  // Adjust the witness points by the capsule's radius along the normal
+  p1 += normal * capsule.radius;
 
-  halflength = capsule.halfLength;
-  secondpos =
-      -4;  // initialize to no 2nd contact (valid values are between -1 and 1)
-
-  // Bring capsule to box-local frame (center's box is at (0,0,0))
-  tmp1.noalias() = tf1.translation() - tf2.translation();
-  // And axis parallel to world
-  pos.noalias() = tf2.rotation().transpose() * tmp1;
-
-  // Capsule's axis
-  tmp1 = tf1.rotation().col(2);
-
-  // Do the same for the capsule axis
-  axis.noalias() = tf2.rotation().transpose() * tmp1;
-  // Scale to get actual capsule half-axis
-  halfaxis = axis * halflength;
-
-  axisdir = 0;
-  if (halfaxis(0) > 0) axisdir += 1;
-  if (halfaxis(1) > 0) axisdir += 2;
-  if (halfaxis(2) > 0) axisdir += 4;
-
-  // Under this notion "axisdir" and "7-axisdir" point in opposite directions,
-  // essentially the same for a capsule
-
-  bestdistmax = 2 * (capsule.radius + halflength + box.halfSide(0) +
-                     box.halfSide(1) + box.halfSide(2));  // initialize bestdist
-  bestdist = bestdistmax;
-  bestsegmentpos = 0;
-
-  tmp2.setZero();
-
-  // Test to see if maybe a face of the box is closest to the capsule
-  for (i = -1; i <= 1; i += 2) {
-    tmp1 = pos + halfaxis * i;
-    tmp2 = tmp1;
-
-    for (c1 = 0, j = 0, c2 = -1; j < 3; j++) {
-      if (tmp1(j) < -box.halfSide(j)) {
-        c1++;
-        c2 = j;
-        tmp1(j) = -box.halfSide(j);
-      } else if (tmp1(j) > box.halfSide(j)) {
-        c1++;
-        c2 = j;
-        tmp1(j) = box.halfSide(j);
-      }
-    }
-
-    if (c1 > 1) continue;
-
-    tmp1 = tmp1 - tmp2;
-    dist = tmp1.dot(tmp1);
-
-    if (dist < bestdist) {
-      bestdist = dist;
-      bestsegmentpos = Scalar(i);
-      cltype = -2 + i;
-      clface = c2;
-    }
+  // Take swept-sphere radius into account
+  const Scalar ssr1 = capsule.getSweptSphereRadius();
+  const Scalar ssr2 = box.getSweptSphereRadius();
+  if (ssr1 > 0 || ssr2 > 0) {
+    p1 += ssr1 * normal;
+    p2 -= ssr2 * normal;
+    dist -= (ssr1 + ssr2);
   }
 
-  tmp2.setZero();
-
-  // Check for corners and edges
-  for (j = 0; j < 3; j++) {
-    for (i = 0; i < 8; i++) {
-      if ((i & (1 << j)) == 0) {
-        // Trick to get a corner
-        tmp3(0) = ((i & 1) ? 1 : -1) * box.halfSide(0);
-        tmp3(1) = ((i & 2) ? 1 : -1) * box.halfSide(1);
-        tmp3(2) = ((i & 4) ? 1 : -1) * box.halfSide(2);
-        tmp3(j) = 0;
-
-        // tmp3 is the starting point on the box
-        // tmp2 is the direction along the "j"-th axis
-        // pos is the capsule's center
-        // halfaxis is the capsule direction
-
-        // Find closest point between capsule and the edge
-        dif = tmp3 - pos;
-
-        ma = box.halfSide(j) * box.halfSide(j);
-        mb = -box.halfSide(j) * halfaxis(j);
-        mc = capsule.halfLength * capsule.halfLength;
-
-        u = -box.halfSide(j) * dif(j);
-        v = halfaxis.dot(dif);
-
-        det = ma * mc - mb * mb;
-        if (std::abs(det) < Eigen::NumTraits<Scalar>::dummy_precision())
-          continue;
-        idet = 1 / det;
-
-        // sX : X=1 means middle of segment. X=0 or 2 one or the other end
-        x1 = (mc * u - mb * v) * idet;
-        x2 = (ma * v - mb * u) * idet;
-
-        s1 = s2 = 1;
-
-        if (x1 > 1) {
-          x1 = 1;
-          s1 = 2;
-          x2 = (v - mb) * (1 / mc);
-        } else if (x1 < -1) {
-          x1 = -1;
-          s1 = 0;
-          x2 = (v + mb) * (1 / mc);
-        }
-
-        if (x2 > 1) {
-          x2 = 1;
-          s2 = 2;
-          x1 = (u - mb) * (1 / ma);
-          if (x1 > 1)
-            x1 = 1, s1 = 2;
-          else if (x1 < -1)
-            x1 = -1, s1 = 0;
-        } else if (x2 < -1) {
-          x2 = -1;
-          s2 = 0;
-          x1 = (u + mb) * (1 / ma);
-          if (x1 > 1)
-            x1 = 1, s1 = 2;
-          else if (x1 < -1)
-            x1 = -1, s1 = 0;
-        }
-
-        dif = tmp3 - pos;
-        dif += halfaxis * (-x2);
-        dif(j) += box.halfSide(j) * x1;
-
-        tmp1(2) = dif.dot(dif);
-
-        c1 = s1 * 3 + s2;
-
-        // The -MINVAL might not be necessary. Fixes numerical problem when axis
-        // is numerically parallel to the box
-        if (tmp1(2) < bestdist - Eigen::NumTraits<Scalar>::dummy_precision()) {
-          bestdist = tmp1(2);
-          bestsegmentpos = x2;
-          bestboxpos = x1;
-
-          // c1<6 means that closest point on the box is at the lower end
-          // or in the middle of the edge
-          c2 = c1 / 6;
-
-          clcorner = i + (1 << j) * c2;  // which corner is the closest
-          cledge = j;                    // which axis
-          cltype = c1;                   // save clamped info
-        }
-      }
-    }
-  }
-
-  // Special case for 2D plane checks - this is complicated math for specific
-  // case handling I've retained the structure but simplified the notation where
-  // possible
-  for (j = 0; j < 3; j++) {
-    if (j == 2) {
-      struct Vec2D {
-        Scalar x, y;
-
-        Vec2D operator-(const Vec2D& other) const {
-          return {x - other.x, y - other.y};
-        }
-
-        Scalar dot(const Vec2D& other) const {
-          return x * other.x + y * other.y;
-        }
-      };
-
-      Vec2D p, s, dd;
-      Scalar uu, vv, w, ee1, best, l;
-
-      bestdist = bestdistmax;
-
-      p = {pos(0), pos(1)};
-      dd = {halfaxis(0), halfaxis(1)};
-      s = {box.halfSide(0), box.halfSide(1)};
-
-      l = std::sqrt(dd.x * dd.x + dd.y * dd.y);
-
-      uu = dd.x * s.y;
-      vv = dd.y * s.x;
-      w = dd.x * p.y - dd.y * p.x;
-
-      best = -1;
-
-      ee1 = +uu - vv;
-      if ((ee1 < 0) == (w < 0)) {
-        if (best < std::abs(ee1)) {
-          best = std::abs(ee1);
-          c1 = 0;
-        }
-      }
-      ee1 = -uu - vv;
-      if ((ee1 < 0) == (w < 0)) {
-        if (best < std::abs(ee1)) {
-          best = std::abs(ee1);
-          c1 = 1;
-        }
-      }
-      ee1 = +uu + vv;
-      if ((ee1 < 0) == (w < 0)) {
-        if (best < std::abs(ee1)) {
-          best = std::abs(ee1);
-          c1 = 2;
-        }
-      }
-      ee1 = -uu + vv;
-      if ((ee1 < 0) == (w < 0)) {
-        if (best < std::abs(ee1)) {
-          best = std::abs(ee1);
-          c1 = 3;
-        }
-      }
-
-      ee1 = std::abs(w) / l;
-      ee1 = dd.x * dd.x + dd.y * dd.y;
-      ee1 = p.x + (+s.y - p.y) / dd.y * dd.x;
-    }
-  }
-
-  // Invalid type
-  if (cltype == -4) return 0;
-
-  if (cltype >= 0 && cltype / 3 != 1) {  // closest to a corner of the box
-    c1 = axisdir ^ clcorner;
-
-    // Hack to find the relative orientation of capsule and corner
-    // there are 2 cases:
-    //    1: pointing to or away from the corner
-    //    2: oriented along a face or an edge
-
-    if (c1 == 0 || c1 == 7)
-      goto skip;  // case 1: no chance of additional contact
-
-    if (c1 == 1 || c1 == 2 || c1 == 4) {
-      mul = 1;
-      de = 1 - bestsegmentpos;
-      dp = 1 + bestsegmentpos;
-    }
-
-    if (c1 == 3 || c1 == 5 || c1 == 6) {
-      mul = -1;
-      c1 = 7 - c1;
-      dp = 1 - bestsegmentpos;
-      de = 1 + bestsegmentpos;
-    }
-
-    // "de" and "dp" distance from first closest point on the capsule to both
-    // ends of it mul is a direction along the capsule's axis
-
-    if (c1 == 1) ax = 0, ax1 = 1, ax2 = 2;
-    if (c1 == 2) ax = 1, ax1 = 2, ax2 = 0;
-    if (c1 == 4) ax = 2, ax1 = 0, ax2 = 1;
-
-    if (axis(ax) * axis(ax) > 0.5) {  // second point along the edge of the box
-      secondpos = de;                 // initial position from the
-      e1 = 2 * box.halfSide(ax) / std::abs(halfaxis(ax));
-
-      if (e1 < secondpos) {
-        secondpos =
-            e1;  // we overshoot, move back to the other corner of the edge
-      }
-      secondpos *= mul;
-    } else {  // second point along a face of the box
-      secondpos = dp;
-
-      // check for overshoot again
-      e1 = 2 * box.halfSide(ax1) / std::abs(halfaxis(ax1));
-      if (e1 < secondpos) secondpos = e1;
-
-      e1 = 2 * box.halfSide(ax2) / std::abs(halfaxis(ax2));
-      if (e1 < secondpos) secondpos = e1;
-
-      secondpos *= -mul;
-    }
-  } else if (cltype >= 0 && cltype / 3 == 1) {  // we are on box's edge
-    // Hacks to find the relative orientation of capsule and edge
-    // there are 2 cases:
-    //    c1= 2^n: edge and capsule are oriented in a T configuration (no more
-    //    contacts) c1!=2^n: oriented in a cross X configuration
-
-    c1 = axisdir ^ clcorner;  // same trick
-    c1 &= 7 - (1 << cledge);  // even more hacks
-
-    if (c1 != 1 && c1 != 2 && c1 != 4) goto skip;
-
-    if (cledge == 0) ax1 = 1, ax2 = 2;
-    if (cledge == 1) ax1 = 2, ax2 = 0;
-    if (cledge == 2) ax1 = 0, ax2 = 1;
-    ax = cledge;
-
-    // Then it finds with which face the capsule has a lower angle and switches
-    // the axis names
-    if (std::abs(axis(ax1)) > std::abs(axis(ax2))) ax1 = ax2;
-    ax2 = 3 - ax - ax1;
-
-    // Keep track of the axis orientation (mul will tell us which direction
-    // along the capsule to find the second point) you can notice all other
-    // references to the axis "halfaxis" are with absolute value
-    if (c1 & (1 << ax2)) {
-      mul = 1;
-      secondpos = 1 - bestsegmentpos;
-    } else {
-      mul = -1;
-      secondpos = 1 + bestsegmentpos;
-    }
-
-    // Now we have to find out whether we point towards the opposite side or
-    // towards one of the sides and also find the farthest point along the
-    // capsule that is above the box
-    e1 = 2 * box.halfSide(ax2) / std::abs(halfaxis(ax2));
-    if (e1 < secondpos) secondpos = e1;
-
-    if (((axisdir & (1 << ax)) != 0) ==
-        ((c1 & (1 << ax2)) != 0))  // that is insane
-      e2 = 1 - bestboxpos;
-    else
-      e2 = 1 + bestboxpos;
-
-    e1 = box.halfSide(ax) * e2 / std::abs(halfaxis(ax));
-
-    if (e1 < secondpos) secondpos = e1;
-
-    secondpos *= mul;
-  } else if (cltype < 0) {
-    // Similarly we handle the case when one capsule's end is closest to a face
-    // of the box and find where is the other end pointing to and clamping to
-    // the farthest point of the capsule that's above the box
-    if (clface == -1)
-      goto skip;  // here the closest point is inside the box, no need for a
-                  // second point
-    if (cltype == -3)
-      mul = 1;
-    else
-      mul = -1;
-
-    secondpos = 2;
-
-    tmp1 = pos;
-    tmp1 += halfaxis * (-mul);
-
-    for (i = 0; i < 3; i++) {
-      if (i != clface) {
-        e1 = (box.halfSide(i) - tmp1(i)) / halfaxis(i) * mul;
-        if (e1 > 0)
-          if (e1 < secondpos) secondpos = e1;
-
-        e1 = (-box.halfSide(i) - tmp1(i)) / halfaxis(i) * mul;
-        if (e1 > 0)
-          if (e1 < secondpos) secondpos = e1;
-      }
-    }
-    secondpos *= mul;
-  }
-
-skip:
-  // Create sphere in original orientation at first contact point
-  tmp1 = pos + halfaxis * bestsegmentpos;
-  tmp2.noalias() = tf2.rotation() * tmp1 + tf2.translation();
-  Sphere sphere(capsule.radius);
-  const Scalar res = boxSphereDistance(box, tf2, sphere, tf1, p2, p1, normal);
-  normal *= -1;
-
-  return res;
+  return dist;
 }
 
 }  // namespace details
