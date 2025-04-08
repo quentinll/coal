@@ -4,7 +4,7 @@
  *  Copyright (c) 2011-2014, Willow Garage, Inc.
  *  Copyright (c) 2014-2015, Open Source Robotics Foundation
  *  Copyright (c) 2018-2019, Centre National de la Recherche Scientifique
- *  Copyright (c) 2021-2024, INRIA
+ *  Copyright (c) 2021-2025, INRIA
  *  All rights reserved.
  *
  *  Redistribution and use in source and binary forms, with or without

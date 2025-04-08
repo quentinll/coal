@@ -2,6 +2,7 @@
  * Software License Agreement (BSD License)
  *
  *  Copyright (c) 2014-2016, CNRS-LAAS and AIST
+ *  Copyright (c) 2025, INRIA
  *  All rights reserved.
  *
  *  Redistribution and use in source and binary forms, with or without
@@ -32,7 +33,7 @@
  *  POSSIBILITY OF SUCH DAMAGE.
  */
 
-/** \author Florent Lamiraux */
+/** \authors Florent Lamiraux*/
 
 #define BOOST_TEST_MODULE COAL_GEOMETRIC_SHAPES
 #include <boost/test/included/unit_test.hpp>

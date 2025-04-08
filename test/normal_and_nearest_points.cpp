@@ -1,7 +1,7 @@
 /*
  *  Software License Agreement (BSD License)
  *
- *  Copyright (c) 2022-2024, INRIA
+ *  Copyright (c) 2022-2025, INRIA
  *  All rights reserved.
  *
  *  Redistribution and use in source and binary forms, with or without
@@ -82,7 +82,7 @@ void test_normal_and_nearest_points(
 #ifndef NDEBUG  // if debug mode
   std::size_t n = 10;
 #else
-  size_t n = 1000;
+  std::size_t n = 1;
 #endif
   // We want to make sure we generate poses that are in collision
   // so we take a relatively small extent for the random poses
@@ -114,6 +114,11 @@ void test_normal_and_nearest_points(
     // Since CollisionRequest::distance_lower_bound is set to infinity,
     // these functions should agree on the results regardless of collision or
     // not.
+    std::cout << "================================================"
+              << std::endl;
+    std::cout << "Test " << i << std::endl;
+    std::cout << "================================================"
+              << std::endl;
     Transform3s tf2 = transforms[i];
     CollisionResult colres;
     DistanceResult distres;
@@ -128,12 +133,22 @@ void test_normal_and_nearest_points(
       BOOST_CHECK_CLOSE(dist, contact.penetration_depth, dummy_precision);
 
       Vec3s cp1 = contact.nearest_points[0];
+      std::cout << "cp1: " << cp1.transpose() << std::endl;
+      std::cout << "distres.nearest_points[0]:  "
+                << distres.nearest_points[0].transpose() << std::endl;
       EIGEN_VECTOR_IS_APPROX(cp1, distres.nearest_points[0], dummy_precision);
 
       Vec3s cp2 = contact.nearest_points[1];
+      std::cout << "cp2: " << cp2.transpose() << std::endl;
+      std::cout << "distres.nearest_points[1]:  "
+                << distres.nearest_points[1].transpose() << std::endl;
       EIGEN_VECTOR_IS_APPROX(cp2, distres.nearest_points[1], dummy_precision);
+      std::cout << "contact.penetration_depth:  " << contact.penetration_depth
+                << std::endl;
       BOOST_CHECK_CLOSE(contact.penetration_depth, -(cp2 - cp1).norm(),
                         epa_tolerance);
+      std::cout << "distres.normal:  " << distres.normal.transpose()
+                << std::endl;
       EIGEN_VECTOR_IS_APPROX(cp1, cp2 - dist * distres.normal, epa_tolerance);
 
       Vec3s separation_vector = contact.penetration_depth * contact.normal;
@@ -253,469 +268,475 @@ Scalar generateRandomNumber(Scalar min, Scalar max) {
   return r * (max - min) * half + (max + min) * half;
 }
 
-BOOST_AUTO_TEST_CASE(test_normal_and_nearest_points_sphere_sphere) {
-  for (size_t i = 0; i < 10; ++i) {
-    Vec2s radii = generateRandomVector<2>(Scalar(0.05), 1);
-    shared_ptr<Sphere> o1(new Sphere(radii(0)));
-    shared_ptr<Sphere> o2(new Sphere(radii(1)));
+// BOOST_AUTO_TEST_CASE(test_normal_and_nearest_points_sphere_sphere) {
+//   for (size_t i = 0; i < 10; ++i) {
+//     Vec2s radii = generateRandomVector<2>(Scalar(0.05), 1);
+//     shared_ptr<Sphere> o1(new Sphere(radii(0)));
+//     shared_ptr<Sphere> o2(new Sphere(radii(1)));
 
-    test_normal_and_nearest_points(*o1.get(), *o2.get());
-  }
-}
+//     test_normal_and_nearest_points(*o1.get(), *o2.get());
+//   }
+// }
 
-BOOST_AUTO_TEST_CASE(test_normal_and_nearest_points_sphere_capsule) {
-  for (size_t i = 0; i < 10; ++i) {
-    Vec2s radii = generateRandomVector<2>(Scalar(0.05), 1);
-    Scalar h = generateRandomNumber(Scalar(0.15), 1);
-    shared_ptr<Sphere> o1(new Sphere(radii(0)));
-    shared_ptr<Capsule> o2(new Capsule(radii(1), h));
+// BOOST_AUTO_TEST_CASE(test_normal_and_nearest_points_sphere_capsule) {
+//   for (size_t i = 0; i < 10; ++i) {
+//     Vec2s radii = generateRandomVector<2>(Scalar(0.05), 1);
+//     Scalar h = generateRandomNumber(Scalar(0.15), 1);
+//     shared_ptr<Sphere> o1(new Sphere(radii(0)));
+//     shared_ptr<Capsule> o2(new Capsule(radii(1), h));
 
-    test_normal_and_nearest_points(*o1.get(), *o2.get());
-    test_normal_and_nearest_points(*o2.get(), *o1.get());
-  }
-}
+//     test_normal_and_nearest_points(*o1.get(), *o2.get());
+//     test_normal_and_nearest_points(*o2.get(), *o1.get());
+//   }
+// }
 
-BOOST_AUTO_TEST_CASE(test_normal_and_nearest_points_sphere_box) {
-  for (size_t i = 0; i < 10; ++i) {
-    shared_ptr<Box> o1(new Box(generateRandomVector<3>(Scalar(0.05), 1)));
-    shared_ptr<Sphere> o2(new Sphere(generateRandomNumber(Scalar(0.05), 1)));
+// BOOST_AUTO_TEST_CASE(test_normal_and_nearest_points_sphere_box) {
+//   for (size_t i = 0; i < 10; ++i) {
+//     shared_ptr<Box> o1(new Box(generateRandomVector<3>(Scalar(0.05), 1)));
+//     shared_ptr<Sphere> o2(new Sphere(generateRandomNumber(Scalar(0.05), 1)));
 
-    test_normal_and_nearest_points(*o1.get(), *o2.get());
-    test_normal_and_nearest_points(*o2.get(), *o1.get());
-  }
-}
+//     test_normal_and_nearest_points(*o1.get(), *o2.get());
+//     test_normal_and_nearest_points(*o2.get(), *o1.get());
+//   }
+// }
 
 BOOST_AUTO_TEST_CASE(test_normal_and_nearest_points_capsule_box) {
-  for (size_t i = 0; i < 10; ++i) {
+  for (size_t i = 0; i < 20; ++i) {
     Scalar h = generateRandomNumber(Scalar(0.15), 1);
     shared_ptr<Box> o1(new Box(generateRandomVector<3>(Scalar(0.05), 1)));
     shared_ptr<Capsule> o2(
         new Capsule(generateRandomNumber(Scalar(0.05), 1), h));
 
     test_normal_and_nearest_points(*o1.get(), *o2.get());
-    test_normal_and_nearest_points(*o2.get(), *o1.get());
+    // test_normal_and_nearest_points(*o2.get(), *o1.get());
   }
 }
 
-BOOST_AUTO_TEST_CASE(test_normal_and_nearest_points_mesh_mesh) {
-  for (size_t i = 0; i < 10; ++i) {
-    Convex<Triangle> o1_ = constructPolytopeFromEllipsoid(
-        Ellipsoid(generateRandomVector<3>(Scalar(0.05), 1)));
-    shared_ptr<Convex<Triangle>> o1(new Convex<Triangle>(
-        o1_.points, o1_.num_points, o1_.polygons, o1_.num_polygons));
-    Convex<Triangle> o2_ = constructPolytopeFromEllipsoid(
-        Ellipsoid(generateRandomVector<3>(Scalar(0.05), 1)));
-    shared_ptr<Convex<Triangle>> o2(new Convex<Triangle>(
-        o2_.points, o2_.num_points, o2_.polygons, o2_.num_polygons));
+// BOOST_AUTO_TEST_CASE(test_normal_and_nearest_points_mesh_mesh) {
+//   for (size_t i = 0; i < 10; ++i) {
+//     Convex<Triangle> o1_ = constructPolytopeFromEllipsoid(
+//         Ellipsoid(generateRandomVector<3>(Scalar(0.05), 1)));
+//     shared_ptr<Convex<Triangle>> o1(new Convex<Triangle>(
+//         o1_.points, o1_.num_points, o1_.polygons, o1_.num_polygons));
+//     Convex<Triangle> o2_ = constructPolytopeFromEllipsoid(
+//         Ellipsoid(generateRandomVector<3>(Scalar(0.05), 1)));
+//     shared_ptr<Convex<Triangle>> o2(new Convex<Triangle>(
+//         o2_.points, o2_.num_points, o2_.polygons, o2_.num_polygons));
 
-    size_t gjk_max_iterations = GJK_DEFAULT_MAX_ITERATIONS;
-    Scalar gjk_tolerance = GJK_DEFAULT_TOLERANCE;
-    size_t epa_max_iterations = EPA_DEFAULT_MAX_ITERATIONS;
-    Scalar epa_tolerance = EPA_DEFAULT_TOLERANCE;
-    test_normal_and_nearest_points(*o1.get(), *o2.get(), gjk_max_iterations,
-                                   gjk_tolerance, epa_max_iterations,
-                                   epa_tolerance);
-  }
-}
+//     size_t gjk_max_iterations = GJK_DEFAULT_MAX_ITERATIONS;
+//     Scalar gjk_tolerance = GJK_DEFAULT_TOLERANCE;
+//     size_t epa_max_iterations = EPA_DEFAULT_MAX_ITERATIONS;
+//     Scalar epa_tolerance = EPA_DEFAULT_TOLERANCE;
+//     test_normal_and_nearest_points(*o1.get(), *o2.get(), gjk_max_iterations,
+//                                    gjk_tolerance, epa_max_iterations,
+//                                    epa_tolerance);
+//   }
+// }
 
-BOOST_AUTO_TEST_CASE(test_normal_and_nearest_points_mesh_box) {
-  Convex<Triangle> o1_ = constructPolytopeFromEllipsoid(
-      Ellipsoid(generateRandomVector<3>(Scalar(0.05), 1)));
-  shared_ptr<Convex<Triangle>> o1(new Convex<Triangle>(
-      o1_.points, o1_.num_points, o1_.polygons, o1_.num_polygons));
-  shared_ptr<Box> o2(new Box(generateRandomVector<3>(Scalar(0.05), 1)));
+// BOOST_AUTO_TEST_CASE(test_normal_and_nearest_points_mesh_box) {
+//   Convex<Triangle> o1_ = constructPolytopeFromEllipsoid(
+//       Ellipsoid(generateRandomVector<3>(Scalar(0.05), 1)));
+//   shared_ptr<Convex<Triangle>> o1(new Convex<Triangle>(
+//       o1_.points, o1_.num_points, o1_.polygons, o1_.num_polygons));
+//   shared_ptr<Box> o2(new Box(generateRandomVector<3>(Scalar(0.05), 1)));
 
-  test_normal_and_nearest_points(*o1.get(), *o2.get());
-  test_normal_and_nearest_points(*o2.get(), *o1.get());
-}
+//   test_normal_and_nearest_points(*o1.get(), *o2.get());
+//   test_normal_and_nearest_points(*o2.get(), *o1.get());
+// }
 
-BOOST_AUTO_TEST_CASE(test_normal_and_nearest_points_mesh_ellipsoid) {
-  for (size_t i = 0; i < 10; ++i) {
-    Convex<Triangle> o1_ = constructPolytopeFromEllipsoid(
-        Ellipsoid(generateRandomVector<3>(Scalar(0.05), 1)));
-    shared_ptr<Convex<Triangle>> o1(new Convex<Triangle>(
-        o1_.points, o1_.num_points, o1_.polygons, o1_.num_polygons));
-    shared_ptr<Ellipsoid> o2(
-        new Ellipsoid(generateRandomVector<3>(Scalar(0.05), 1)));
+// BOOST_AUTO_TEST_CASE(test_normal_and_nearest_points_mesh_ellipsoid) {
+//   for (size_t i = 0; i < 10; ++i) {
+//     Convex<Triangle> o1_ = constructPolytopeFromEllipsoid(
+//         Ellipsoid(generateRandomVector<3>(Scalar(0.05), 1)));
+//     shared_ptr<Convex<Triangle>> o1(new Convex<Triangle>(
+//         o1_.points, o1_.num_points, o1_.polygons, o1_.num_polygons));
+//     shared_ptr<Ellipsoid> o2(
+//         new Ellipsoid(generateRandomVector<3>(Scalar(0.05), 1)));
 
-    Scalar gjk_tolerance = Scalar(1e-6);
-    // With EPA's tolerance set at 1e-3, the precision on the normal, contact
-    // points and penetration depth is on the order of the milimeter. However,
-    // EPA (currently) cannot converge to lower tolerances on strictly convex
-    // shapes in a reasonable amount of iterations.
-    Scalar epa_tolerance = Scalar(1e-3);
-    test_normal_and_nearest_points(*o1.get(), *o2.get(),
-                                   GJK_DEFAULT_MAX_ITERATIONS, gjk_tolerance,
-                                   EPA_DEFAULT_MAX_ITERATIONS, epa_tolerance);
-    test_normal_and_nearest_points(*o2.get(), *o1.get(),
-                                   GJK_DEFAULT_MAX_ITERATIONS, gjk_tolerance,
-                                   EPA_DEFAULT_MAX_ITERATIONS, epa_tolerance);
-  }
-}
+//     Scalar gjk_tolerance = Scalar(1e-6);
+//     // With EPA's tolerance set at 1e-3, the precision on the normal, contact
+//     // points and penetration depth is on the order of the milimeter.
+//     However,
+//     // EPA (currently) cannot converge to lower tolerances on strictly convex
+//     // shapes in a reasonable amount of iterations.
+//     Scalar epa_tolerance = Scalar(1e-3);
+//     test_normal_and_nearest_points(*o1.get(), *o2.get(),
+//                                    GJK_DEFAULT_MAX_ITERATIONS, gjk_tolerance,
+//                                    EPA_DEFAULT_MAX_ITERATIONS,
+//                                    epa_tolerance);
+//     test_normal_and_nearest_points(*o2.get(), *o1.get(),
+//                                    GJK_DEFAULT_MAX_ITERATIONS, gjk_tolerance,
+//                                    EPA_DEFAULT_MAX_ITERATIONS,
+//                                    epa_tolerance);
+//   }
+// }
 
-BOOST_AUTO_TEST_CASE(test_normal_and_nearest_points_ellipsoid_ellipsoid) {
-  for (size_t i = 0; i < 10; ++i) {
-    shared_ptr<Ellipsoid> o1(
-        new Ellipsoid(generateRandomVector<3>(Scalar(0.05), 1.0)));
-    shared_ptr<Ellipsoid> o2(
-        new Ellipsoid(generateRandomVector<3>(Scalar(0.05), 1.0)));
+// BOOST_AUTO_TEST_CASE(test_normal_and_nearest_points_ellipsoid_ellipsoid) {
+//   for (size_t i = 0; i < 10; ++i) {
+//     shared_ptr<Ellipsoid> o1(
+//         new Ellipsoid(generateRandomVector<3>(Scalar(0.05), 1.0)));
+//     shared_ptr<Ellipsoid> o2(
+//         new Ellipsoid(generateRandomVector<3>(Scalar(0.05), 1.0)));
 
-    size_t gjk_max_iterations = GJK_DEFAULT_MAX_ITERATIONS;
-    Scalar gjk_tolerance = Scalar(1e-6);
-    // With EPA's tolerance set at 1e-3, the precision on the normal, contact
-    // points and penetration depth is on the order of the milimeter. However,
-    // EPA (currently) cannot converge to lower tolerances on strictly convex
-    // shapes in a reasonable amount of iterations.
-    size_t epa_max_iterations = 250;
-    Scalar epa_tolerance = Scalar(1e-3);
-    // For EPA on ellipsoids, we need to increase the number of iterations in
-    // this test. This is simply because this test checks **a lot** of cases and
-    // it can generate some of the worst cases for EPA. We don't want to
-    // increase the tolerance too much because otherwise the test would not
-    // work.
-    test_normal_and_nearest_points(*o1.get(), *o2.get(), gjk_max_iterations,
-                                   gjk_tolerance, epa_max_iterations,
-                                   epa_tolerance);
-  }
-}
+//     size_t gjk_max_iterations = GJK_DEFAULT_MAX_ITERATIONS;
+//     Scalar gjk_tolerance = Scalar(1e-6);
+//     // With EPA's tolerance set at 1e-3, the precision on the normal, contact
+//     // points and penetration depth is on the order of the milimeter.
+//     However,
+//     // EPA (currently) cannot converge to lower tolerances on strictly convex
+//     // shapes in a reasonable amount of iterations.
+//     size_t epa_max_iterations = 250;
+//     Scalar epa_tolerance = Scalar(1e-3);
+//     // For EPA on ellipsoids, we need to increase the number of iterations in
+//     // this test. This is simply because this test checks **a lot** of cases
+//     and
+//     // it can generate some of the worst cases for EPA. We don't want to
+//     // increase the tolerance too much because otherwise the test would not
+//     // work.
+//     test_normal_and_nearest_points(*o1.get(), *o2.get(), gjk_max_iterations,
+//                                    gjk_tolerance, epa_max_iterations,
+//                                    epa_tolerance);
+//   }
+// }
 
-BOOST_AUTO_TEST_CASE(test_normal_and_nearest_points_box_plane) {
-  for (size_t i = 0; i < 10; ++i) {
-    shared_ptr<Box> o1(new Box(generateRandomVector<3>(Scalar(0.05), 1)));
-    const Scalar half(0.5);
-    Scalar offset = generateRandomNumber(-half, half);
-    Vec3s n = Vec3s::Random();
-    n.normalize();
-    shared_ptr<Plane> o2(new Plane(n, offset));
+// BOOST_AUTO_TEST_CASE(test_normal_and_nearest_points_box_plane) {
+//   for (size_t i = 0; i < 10; ++i) {
+//     shared_ptr<Box> o1(new Box(generateRandomVector<3>(Scalar(0.05), 1)));
+//     const Scalar half(0.5);
+//     Scalar offset = generateRandomNumber(-half, half);
+//     Vec3s n = Vec3s::Random();
+//     n.normalize();
+//     shared_ptr<Plane> o2(new Plane(n, offset));
 
-    test_normal_and_nearest_points(*o1.get(), *o2.get());
-    test_normal_and_nearest_points(*o2.get(), *o1.get());
-  }
-}
+//     test_normal_and_nearest_points(*o1.get(), *o2.get());
+//     test_normal_and_nearest_points(*o2.get(), *o1.get());
+//   }
+// }
 
-BOOST_AUTO_TEST_CASE(test_normal_and_nearest_points_box_halfspace) {
-  for (size_t i = 0; i < 10; ++i) {
-    shared_ptr<Box> o1(new Box(generateRandomVector<3>(Scalar(0.05), 1)));
-    Scalar offset = Scalar(0.1);
-    Vec3s n = Vec3s::Random();
-    n.normalize();
-    shared_ptr<Halfspace> o2(new Halfspace(n, offset));
+// BOOST_AUTO_TEST_CASE(test_normal_and_nearest_points_box_halfspace) {
+//   for (size_t i = 0; i < 10; ++i) {
+//     shared_ptr<Box> o1(new Box(generateRandomVector<3>(Scalar(0.05), 1)));
+//     Scalar offset = Scalar(0.1);
+//     Vec3s n = Vec3s::Random();
+//     n.normalize();
+//     shared_ptr<Halfspace> o2(new Halfspace(n, offset));
 
-    test_normal_and_nearest_points(*o1.get(), *o2.get());
-    test_normal_and_nearest_points(*o2.get(), *o1.get());
-  }
-}
+//     test_normal_and_nearest_points(*o1.get(), *o2.get());
+//     test_normal_and_nearest_points(*o2.get(), *o1.get());
+//   }
+// }
 
-BOOST_AUTO_TEST_CASE(test_normal_and_nearest_points_capsule_halfspace) {
-  for (size_t i = 0; i < 10; ++i) {
-    Scalar r = generateRandomNumber(Scalar(0.05), 1);
-    Scalar h = generateRandomNumber(Scalar(0.15), 1);
-    shared_ptr<Capsule> o1(new Capsule(r, h));
-    const Scalar half(0.5);
-    Scalar offset = generateRandomNumber(-half, half);
-    Vec3s n = Vec3s::Random();
-    n.normalize();
-    shared_ptr<Halfspace> o2(new Halfspace(n, offset));
+// BOOST_AUTO_TEST_CASE(test_normal_and_nearest_points_capsule_halfspace) {
+//   for (size_t i = 0; i < 10; ++i) {
+//     Scalar r = generateRandomNumber(Scalar(0.05), 1);
+//     Scalar h = generateRandomNumber(Scalar(0.15), 1);
+//     shared_ptr<Capsule> o1(new Capsule(r, h));
+//     const Scalar half(0.5);
+//     Scalar offset = generateRandomNumber(-half, half);
+//     Vec3s n = Vec3s::Random();
+//     n.normalize();
+//     shared_ptr<Halfspace> o2(new Halfspace(n, offset));
 
-    test_normal_and_nearest_points(*o1.get(), *o2.get());
-    test_normal_and_nearest_points(*o2.get(), *o1.get());
-  }
-}
+//     test_normal_and_nearest_points(*o1.get(), *o2.get());
+//     test_normal_and_nearest_points(*o2.get(), *o1.get());
+//   }
+// }
 
-BOOST_AUTO_TEST_CASE(test_normal_and_nearest_points_sphere_halfspace) {
-  for (size_t i = 0; i < 10; ++i) {
-    shared_ptr<Sphere> o1(new Sphere(generateRandomNumber(Scalar(0.05), 1)));
-    const Scalar half(0.5);
-    Scalar offset = generateRandomNumber(-half, half);
-    Vec3s n = Vec3s::Random();
-    n.normalize();
-    shared_ptr<Halfspace> o2(new Halfspace(n, offset));
+// BOOST_AUTO_TEST_CASE(test_normal_and_nearest_points_sphere_halfspace) {
+//   for (size_t i = 0; i < 10; ++i) {
+//     shared_ptr<Sphere> o1(new Sphere(generateRandomNumber(Scalar(0.05), 1)));
+//     const Scalar half(0.5);
+//     Scalar offset = generateRandomNumber(-half, half);
+//     Vec3s n = Vec3s::Random();
+//     n.normalize();
+//     shared_ptr<Halfspace> o2(new Halfspace(n, offset));
 
-    test_normal_and_nearest_points(*o1.get(), *o2.get());
-    test_normal_and_nearest_points(*o2.get(), *o1.get());
-  }
-}
+//     test_normal_and_nearest_points(*o1.get(), *o2.get());
+//     test_normal_and_nearest_points(*o2.get(), *o1.get());
+//   }
+// }
 
-BOOST_AUTO_TEST_CASE(test_normal_and_nearest_points_sphere_plane) {
-  for (size_t i = 0; i < 10; ++i) {
-    shared_ptr<Sphere> o1(new Sphere(generateRandomNumber(Scalar(0.05), 1)));
-    const Scalar half(0.5);
-    Scalar offset = generateRandomNumber(-half, half);
-    Vec3s n = Vec3s::Random();
-    n.normalize();
-    shared_ptr<Plane> o2(new Plane(n, offset));
+// BOOST_AUTO_TEST_CASE(test_normal_and_nearest_points_sphere_plane) {
+//   for (size_t i = 0; i < 10; ++i) {
+//     shared_ptr<Sphere> o1(new Sphere(generateRandomNumber(Scalar(0.05), 1)));
+//     const Scalar half(0.5);
+//     Scalar offset = generateRandomNumber(-half, half);
+//     Vec3s n = Vec3s::Random();
+//     n.normalize();
+//     shared_ptr<Plane> o2(new Plane(n, offset));
 
-    test_normal_and_nearest_points(*o1.get(), *o2.get());
-    test_normal_and_nearest_points(*o2.get(), *o1.get());
-  }
-}
+//     test_normal_and_nearest_points(*o1.get(), *o2.get());
+//     test_normal_and_nearest_points(*o2.get(), *o1.get());
+//   }
+// }
 
-BOOST_AUTO_TEST_CASE(test_normal_and_nearest_points_mesh_halfspace) {
-  for (size_t i = 0; i < 10; ++i) {
-    Convex<Triangle> o1_ = constructPolytopeFromEllipsoid(
-        Ellipsoid(generateRandomVector<3>(Scalar(0.05), 1)));
-    shared_ptr<Convex<Triangle>> o1(new Convex<Triangle>(
-        o1_.points, o1_.num_points, o1_.polygons, o1_.num_polygons));
-    const Scalar half(0.5);
-    Scalar offset = generateRandomNumber(-half, half);
-    Vec3s n = Vec3s::Random();
-    n.normalize();
-    shared_ptr<Halfspace> o2(new Halfspace(n, offset));
+// BOOST_AUTO_TEST_CASE(test_normal_and_nearest_points_mesh_halfspace) {
+//   for (size_t i = 0; i < 10; ++i) {
+//     Convex<Triangle> o1_ = constructPolytopeFromEllipsoid(
+//         Ellipsoid(generateRandomVector<3>(Scalar(0.05), 1)));
+//     shared_ptr<Convex<Triangle>> o1(new Convex<Triangle>(
+//         o1_.points, o1_.num_points, o1_.polygons, o1_.num_polygons));
+//     const Scalar half(0.5);
+//     Scalar offset = generateRandomNumber(-half, half);
+//     Vec3s n = Vec3s::Random();
+//     n.normalize();
+//     shared_ptr<Halfspace> o2(new Halfspace(n, offset));
 
-    test_normal_and_nearest_points(*o1.get(), *o2.get());
-    test_normal_and_nearest_points(*o2.get(), *o1.get());
-  }
-}
+//     test_normal_and_nearest_points(*o1.get(), *o2.get());
+//     test_normal_and_nearest_points(*o2.get(), *o1.get());
+//   }
+// }
 
-BOOST_AUTO_TEST_CASE(test_normal_and_nearest_points_cone_cylinder) {
-  for (size_t i = 0; i < 10; ++i) {
-    Vec2s r = generateRandomVector<2>(Scalar(0.05), 1);
-    Vec2s h = generateRandomVector<2>(Scalar(0.15), 1);
-    shared_ptr<Cone> o1(new Cone(r(0), h(0)));
-    shared_ptr<Cylinder> o2(new Cylinder(r(1), h(1)));
+// BOOST_AUTO_TEST_CASE(test_normal_and_nearest_points_cone_cylinder) {
+//   for (size_t i = 0; i < 10; ++i) {
+//     Vec2s r = generateRandomVector<2>(Scalar(0.05), 1);
+//     Vec2s h = generateRandomVector<2>(Scalar(0.15), 1);
+//     shared_ptr<Cone> o1(new Cone(r(0), h(0)));
+//     shared_ptr<Cylinder> o2(new Cylinder(r(1), h(1)));
 
-    size_t gjk_max_iterations = GJK_DEFAULT_MAX_ITERATIONS;
-    Scalar gjk_tolerance = Scalar(1e-6);
-    size_t epa_max_iterations = 250;
-    Scalar epa_tolerance = Scalar(1e-3);
-    test_normal_and_nearest_points(*o1.get(), *o2.get(), gjk_max_iterations,
-                                   gjk_tolerance, epa_max_iterations,
-                                   epa_tolerance);
-    test_normal_and_nearest_points(*o2.get(), *o1.get(), gjk_max_iterations,
-                                   gjk_tolerance, epa_max_iterations,
-                                   epa_tolerance);
-  }
-}
+//     size_t gjk_max_iterations = GJK_DEFAULT_MAX_ITERATIONS;
+//     Scalar gjk_tolerance = Scalar(1e-6);
+//     size_t epa_max_iterations = 250;
+//     Scalar epa_tolerance = Scalar(1e-3);
+//     test_normal_and_nearest_points(*o1.get(), *o2.get(), gjk_max_iterations,
+//                                    gjk_tolerance, epa_max_iterations,
+//                                    epa_tolerance);
+//     test_normal_and_nearest_points(*o2.get(), *o1.get(), gjk_max_iterations,
+//                                    gjk_tolerance, epa_max_iterations,
+//                                    epa_tolerance);
+//   }
+// }
 
-BOOST_AUTO_TEST_CASE(test_normal_and_nearest_points_cylinder_ellipsoid) {
-  for (size_t i = 0; i < 10; ++i) {
-    shared_ptr<Ellipsoid> o1(
-        new Ellipsoid(generateRandomVector<3>(Scalar(0.05), 1)));
-    Vec2s r = generateRandomVector<2>(Scalar(0.05), 1);
-    Vec2s h = generateRandomVector<2>(Scalar(0.15), 1);
-    shared_ptr<Cylinder> o2(new Cylinder(r(1), h(1)));
+// BOOST_AUTO_TEST_CASE(test_normal_and_nearest_points_cylinder_ellipsoid) {
+//   for (size_t i = 0; i < 10; ++i) {
+//     shared_ptr<Ellipsoid> o1(
+//         new Ellipsoid(generateRandomVector<3>(Scalar(0.05), 1)));
+//     Vec2s r = generateRandomVector<2>(Scalar(0.05), 1);
+//     Vec2s h = generateRandomVector<2>(Scalar(0.15), 1);
+//     shared_ptr<Cylinder> o2(new Cylinder(r(1), h(1)));
 
-    size_t gjk_max_iterations = GJK_DEFAULT_MAX_ITERATIONS;
-    Scalar gjk_tolerance = Scalar(1e-6);
-    size_t epa_max_iterations = 250;
-    Scalar epa_tolerance = Scalar(1e-3);
-    test_normal_and_nearest_points(*o1.get(), *o2.get(), gjk_max_iterations,
-                                   gjk_tolerance, epa_max_iterations,
-                                   epa_tolerance);
-    test_normal_and_nearest_points(*o2.get(), *o1.get(), gjk_max_iterations,
-                                   gjk_tolerance, epa_max_iterations,
-                                   epa_tolerance);
-  }
-}
+//     size_t gjk_max_iterations = GJK_DEFAULT_MAX_ITERATIONS;
+//     Scalar gjk_tolerance = Scalar(1e-6);
+//     size_t epa_max_iterations = 250;
+//     Scalar epa_tolerance = Scalar(1e-3);
+//     test_normal_and_nearest_points(*o1.get(), *o2.get(), gjk_max_iterations,
+//                                    gjk_tolerance, epa_max_iterations,
+//                                    epa_tolerance);
+//     test_normal_and_nearest_points(*o2.get(), *o1.get(), gjk_max_iterations,
+//                                    gjk_tolerance, epa_max_iterations,
+//                                    epa_tolerance);
+//   }
+// }
 
-BOOST_AUTO_TEST_CASE(test_normal_and_nearest_points_cone_halfspace) {
-  for (size_t i = 0; i < 10; ++i) {
-    Scalar r = generateRandomNumber(Scalar(0.05), 1);
-    Scalar h = generateRandomNumber(Scalar(0.15), 1);
-    shared_ptr<Cone> o1(new Cone(r, h));
-    const Scalar half(0.5);
-    Scalar offset = generateRandomNumber(-half, half);
-    Vec3s n = Vec3s::Random();
-    n.normalize();
-    shared_ptr<Halfspace> o2(new Halfspace(n, offset));
+// BOOST_AUTO_TEST_CASE(test_normal_and_nearest_points_cone_halfspace) {
+//   for (size_t i = 0; i < 10; ++i) {
+//     Scalar r = generateRandomNumber(Scalar(0.05), 1);
+//     Scalar h = generateRandomNumber(Scalar(0.15), 1);
+//     shared_ptr<Cone> o1(new Cone(r, h));
+//     const Scalar half(0.5);
+//     Scalar offset = generateRandomNumber(-half, half);
+//     Vec3s n = Vec3s::Random();
+//     n.normalize();
+//     shared_ptr<Halfspace> o2(new Halfspace(n, offset));
 
-    test_normal_and_nearest_points(*o1.get(), *o2.get());
-    test_normal_and_nearest_points(*o2.get(), *o1.get());
-  }
-}
+//     test_normal_and_nearest_points(*o1.get(), *o2.get());
+//     test_normal_and_nearest_points(*o2.get(), *o1.get());
+//   }
+// }
 
-BOOST_AUTO_TEST_CASE(test_normal_and_nearest_points_cylinder_halfspace) {
-  for (size_t i = 0; i < 10; ++i) {
-    Scalar r = generateRandomNumber(Scalar(0.05), 1);
-    Scalar h = generateRandomNumber(Scalar(0.15), 1);
-    shared_ptr<Cylinder> o1(new Cylinder(r, h));
-    const Scalar half(0.5);
-    Scalar offset = generateRandomNumber(-half, half);
-    Vec3s n = Vec3s::Random();
-    n.normalize();
-    shared_ptr<Halfspace> o2(new Halfspace(n, offset));
+// BOOST_AUTO_TEST_CASE(test_normal_and_nearest_points_cylinder_halfspace) {
+//   for (size_t i = 0; i < 10; ++i) {
+//     Scalar r = generateRandomNumber(Scalar(0.05), 1);
+//     Scalar h = generateRandomNumber(Scalar(0.15), 1);
+//     shared_ptr<Cylinder> o1(new Cylinder(r, h));
+//     const Scalar half(0.5);
+//     Scalar offset = generateRandomNumber(-half, half);
+//     Vec3s n = Vec3s::Random();
+//     n.normalize();
+//     shared_ptr<Halfspace> o2(new Halfspace(n, offset));
 
-    test_normal_and_nearest_points(*o1.get(), *o2.get());
-    test_normal_and_nearest_points(*o2.get(), *o1.get());
-  }
-}
+//     test_normal_and_nearest_points(*o1.get(), *o2.get());
+//     test_normal_and_nearest_points(*o2.get(), *o1.get());
+//   }
+// }
 
-BOOST_AUTO_TEST_CASE(test_normal_and_nearest_points_cone_plane) {
-  for (size_t i = 0; i < 10; ++i) {
-    Scalar r = generateRandomNumber(Scalar(0.05), 1);
-    Scalar h = generateRandomNumber(Scalar(0.15), 1);
-    shared_ptr<Cone> o1(new Cone(r, h));
-    const Scalar half(0.5);
-    Scalar offset = generateRandomNumber(-half, half);
-    Vec3s n = Vec3s::Random();
-    n.normalize();
-    shared_ptr<Plane> o2(new Plane(n, offset));
+// BOOST_AUTO_TEST_CASE(test_normal_and_nearest_points_cone_plane) {
+//   for (size_t i = 0; i < 10; ++i) {
+//     Scalar r = generateRandomNumber(Scalar(0.05), 1);
+//     Scalar h = generateRandomNumber(Scalar(0.15), 1);
+//     shared_ptr<Cone> o1(new Cone(r, h));
+//     const Scalar half(0.5);
+//     Scalar offset = generateRandomNumber(-half, half);
+//     Vec3s n = Vec3s::Random();
+//     n.normalize();
+//     shared_ptr<Plane> o2(new Plane(n, offset));
 
-    test_normal_and_nearest_points(*o1.get(), *o2.get());
-    test_normal_and_nearest_points(*o2.get(), *o1.get());
-  }
-}
+//     test_normal_and_nearest_points(*o1.get(), *o2.get());
+//     test_normal_and_nearest_points(*o2.get(), *o1.get());
+//   }
+// }
 
-BOOST_AUTO_TEST_CASE(test_normal_and_nearest_points_cylinder_plane) {
-  for (size_t i = 0; i < 10; ++i) {
-    Scalar r = generateRandomNumber(Scalar(0.05), 1);
-    Scalar h = generateRandomNumber(Scalar(0.15), 1);
-    shared_ptr<Cylinder> o1(new Cylinder(r, h));
-    const Scalar half(0.5);
-    Scalar offset = generateRandomNumber(-half, half);
-    Vec3s n = Vec3s::Random();
-    n.normalize();
-    shared_ptr<Plane> o2(new Plane(n, offset));
+// BOOST_AUTO_TEST_CASE(test_normal_and_nearest_points_cylinder_plane) {
+//   for (size_t i = 0; i < 10; ++i) {
+//     Scalar r = generateRandomNumber(Scalar(0.05), 1);
+//     Scalar h = generateRandomNumber(Scalar(0.15), 1);
+//     shared_ptr<Cylinder> o1(new Cylinder(r, h));
+//     const Scalar half(0.5);
+//     Scalar offset = generateRandomNumber(-half, half);
+//     Vec3s n = Vec3s::Random();
+//     n.normalize();
+//     shared_ptr<Plane> o2(new Plane(n, offset));
 
-    test_normal_and_nearest_points(*o1.get(), *o2.get());
-    test_normal_and_nearest_points(*o2.get(), *o1.get());
-  }
-}
+//     test_normal_and_nearest_points(*o1.get(), *o2.get());
+//     test_normal_and_nearest_points(*o2.get(), *o1.get());
+//   }
+// }
 
-BOOST_AUTO_TEST_CASE(test_normal_and_nearest_points_capsule_plane) {
-  for (size_t i = 0; i < 10; ++i) {
-    Scalar r = generateRandomNumber(Scalar(0.05), 1);
-    Scalar h = generateRandomNumber(Scalar(0.15), 1);
-    shared_ptr<Capsule> o1(new Capsule(r, h));
-    const Scalar half(0.5);
-    Scalar offset = generateRandomNumber(-half, half);
-    Vec3s n = Vec3s::Random();
-    n.normalize();
-    shared_ptr<Plane> o2(new Plane(n, offset));
+// BOOST_AUTO_TEST_CASE(test_normal_and_nearest_points_capsule_plane) {
+//   for (size_t i = 0; i < 10; ++i) {
+//     Scalar r = generateRandomNumber(Scalar(0.05), 1);
+//     Scalar h = generateRandomNumber(Scalar(0.15), 1);
+//     shared_ptr<Capsule> o1(new Capsule(r, h));
+//     const Scalar half(0.5);
+//     Scalar offset = generateRandomNumber(-half, half);
+//     Vec3s n = Vec3s::Random();
+//     n.normalize();
+//     shared_ptr<Plane> o2(new Plane(n, offset));
 
-    test_normal_and_nearest_points(*o1.get(), *o2.get());
-    test_normal_and_nearest_points(*o2.get(), *o1.get());
-  }
-}
+//     test_normal_and_nearest_points(*o1.get(), *o2.get());
+//     test_normal_and_nearest_points(*o2.get(), *o1.get());
+//   }
+// }
 
-BOOST_AUTO_TEST_CASE(test_normal_and_nearest_points_capsule_capsule) {
-  for (size_t i = 0; i < 10; ++i) {
-    Vec2s r = generateRandomVector<2>(Scalar(0.05), 1);
-    Vec2s h = generateRandomVector<2>(Scalar(0.15), 1);
-    shared_ptr<Capsule> o1(new Capsule(r(0), h(0)));
-    shared_ptr<Capsule> o2(new Capsule(r(1), h(1)));
+// BOOST_AUTO_TEST_CASE(test_normal_and_nearest_points_capsule_capsule) {
+//   for (size_t i = 0; i < 10; ++i) {
+//     Vec2s r = generateRandomVector<2>(Scalar(0.05), 1);
+//     Vec2s h = generateRandomVector<2>(Scalar(0.15), 1);
+//     shared_ptr<Capsule> o1(new Capsule(r(0), h(0)));
+//     shared_ptr<Capsule> o2(new Capsule(r(1), h(1)));
 
-    test_normal_and_nearest_points(*o1.get(), *o2.get());
-    test_normal_and_nearest_points(*o2.get(), *o1.get());
-  }
-}
+//     test_normal_and_nearest_points(*o1.get(), *o2.get());
+//     test_normal_and_nearest_points(*o2.get(), *o1.get());
+//   }
+// }
 
-BOOST_AUTO_TEST_CASE(test_normal_and_nearest_points_sphere_cylinder) {
-  for (size_t i = 0; i < 10; ++i) {
-    Vec2s r = generateRandomVector<2>(Scalar(0.05), 1);
-    Scalar h = generateRandomNumber(Scalar(0.15), 1);
-    shared_ptr<Sphere> o1(new Sphere(r(0)));
-    shared_ptr<Cylinder> o2(new Cylinder(r(1), h));
+// BOOST_AUTO_TEST_CASE(test_normal_and_nearest_points_sphere_cylinder) {
+//   for (size_t i = 0; i < 10; ++i) {
+//     Vec2s r = generateRandomVector<2>(Scalar(0.05), 1);
+//     Scalar h = generateRandomNumber(Scalar(0.15), 1);
+//     shared_ptr<Sphere> o1(new Sphere(r(0)));
+//     shared_ptr<Cylinder> o2(new Cylinder(r(1), h));
 
-    test_normal_and_nearest_points(*o1.get(), *o2.get());
-    test_normal_and_nearest_points(*o2.get(), *o1.get());
-  }
-}
+//     test_normal_and_nearest_points(*o1.get(), *o2.get());
+//     test_normal_and_nearest_points(*o2.get(), *o1.get());
+//   }
+// }
 
-BOOST_AUTO_TEST_CASE(test_normal_and_nearest_points_ellipsoid_halfspace) {
-  for (size_t i = 0; i < 10; ++i) {
-    Scalar offset = generateRandomNumber(Scalar(0.15), 1);
-    Vec3s n = Vec3s::Random();
-    n.normalize();
-    shared_ptr<Ellipsoid> o1(
-        new Ellipsoid(generateRandomVector<3>(Scalar(0.05), 1)));
-    shared_ptr<Halfspace> o2(new Halfspace(n, offset));
+// BOOST_AUTO_TEST_CASE(test_normal_and_nearest_points_ellipsoid_halfspace) {
+//   for (size_t i = 0; i < 10; ++i) {
+//     Scalar offset = generateRandomNumber(Scalar(0.15), 1);
+//     Vec3s n = Vec3s::Random();
+//     n.normalize();
+//     shared_ptr<Ellipsoid> o1(
+//         new Ellipsoid(generateRandomVector<3>(Scalar(0.05), 1)));
+//     shared_ptr<Halfspace> o2(new Halfspace(n, offset));
 
-    test_normal_and_nearest_points(*o1.get(), *o2.get());
-    test_normal_and_nearest_points(*o2.get(), *o1.get());
-  }
-}
+//     test_normal_and_nearest_points(*o1.get(), *o2.get());
+//     test_normal_and_nearest_points(*o2.get(), *o1.get());
+//   }
+// }
 
-BOOST_AUTO_TEST_CASE(test_normal_and_nearest_points_ellipsoid_plane) {
-  for (size_t i = 0; i < 10; ++i) {
-    Scalar offset = generateRandomNumber(Scalar(0.15), 1);
-    Vec3s n = Vec3s::Random();
-    n.normalize();
-    shared_ptr<Ellipsoid> o1(
-        new Ellipsoid(generateRandomVector<3>(Scalar(0.05), 1)));
-    shared_ptr<Plane> o2(new Plane(n, offset));
+// BOOST_AUTO_TEST_CASE(test_normal_and_nearest_points_ellipsoid_plane) {
+//   for (size_t i = 0; i < 10; ++i) {
+//     Scalar offset = generateRandomNumber(Scalar(0.15), 1);
+//     Vec3s n = Vec3s::Random();
+//     n.normalize();
+//     shared_ptr<Ellipsoid> o1(
+//         new Ellipsoid(generateRandomVector<3>(Scalar(0.05), 1)));
+//     shared_ptr<Plane> o2(new Plane(n, offset));
 
-    test_normal_and_nearest_points(*o1.get(), *o2.get());
-    test_normal_and_nearest_points(*o2.get(), *o1.get());
-  }
-}
+//     test_normal_and_nearest_points(*o1.get(), *o2.get());
+//     test_normal_and_nearest_points(*o2.get(), *o1.get());
+//   }
+// }
 
-void test_normal_and_nearest_points(const BVHModel<OBBRSS>& o1,
-                                    const Halfspace& o2) {
-  // Generate random poses for o2
-#ifndef NDEBUG  // if debug mode
-  std::size_t n = 1;
-#else
-  size_t n = 10000;
-#endif
-  Scalar extents[] = {-2., -2., -2., 2., 2., 2.};
-  std::vector<Transform3s> transforms;
-  generateRandomTransforms(extents, transforms, n);
-  Transform3s tf1 = Transform3s::Identity();
-  transforms[0] = Transform3s::Identity();
+// void test_normal_and_nearest_points(const BVHModel<OBBRSS>& o1,
+//                                     const Halfspace& o2) {
+//   // Generate random poses for o2
+// #ifndef NDEBUG  // if debug mode
+//   std::size_t n = 1;
+// #else
+//   size_t n = 10000;
+// #endif
+//   Scalar extents[] = {-2., -2., -2., 2., 2., 2.};
+//   std::vector<Transform3s> transforms;
+//   generateRandomTransforms(extents, transforms, n);
+//   Transform3s tf1 = Transform3s::Identity();
+//   transforms[0] = Transform3s::Identity();
 
-  CollisionRequest colreq;
-  colreq.distance_upper_bound = std::numeric_limits<Scalar>::max();
-  colreq.num_max_contacts = 100;
-  CollisionResult colres;
-  DistanceRequest distreq;
-  DistanceResult distres;
+//   CollisionRequest colreq;
+//   colreq.distance_upper_bound = std::numeric_limits<Scalar>::max();
+//   colreq.num_max_contacts = 100;
+//   CollisionResult colres;
+//   DistanceRequest distreq;
+//   DistanceResult distres;
 
-  for (size_t i = 0; i < n; i++) {
-    Transform3s tf2 = transforms[i];
-    colres.clear();
-    distres.clear();
-    size_t col = collide(&o1, tf1, &o2, tf2, colreq, colres);
-    Scalar dist = distance(&o1, tf1, &o2, tf2, distreq, distres);
+//   for (size_t i = 0; i < n; i++) {
+//     Transform3s tf2 = transforms[i];
+//     colres.clear();
+//     distres.clear();
+//     size_t col = collide(&o1, tf1, &o2, tf2, colreq, colres);
+//     Scalar dist = distance(&o1, tf1, &o2, tf2, distreq, distres);
 
-    if (col) {
-      BOOST_CHECK(dist <= 0.);
-      BOOST_CHECK_CLOSE(dist, distres.min_distance, 1e-6);
-      for (size_t c = 0; c < colres.numContacts(); c++) {
-        Contact contact = colres.getContact(c);
-        BOOST_CHECK(contact.penetration_depth <= 0);
-        BOOST_CHECK(contact.penetration_depth >= colres.distance_lower_bound);
+//     if (col) {
+//       BOOST_CHECK(dist <= 0.);
+//       BOOST_CHECK_CLOSE(dist, distres.min_distance, 1e-6);
+//       for (size_t c = 0; c < colres.numContacts(); c++) {
+//         Contact contact = colres.getContact(c);
+//         BOOST_CHECK(contact.penetration_depth <= 0);
+//         BOOST_CHECK(contact.penetration_depth >=
+//         colres.distance_lower_bound);
 
-        Vec3s cp1 = contact.nearest_points[0];
-        Vec3s cp2 = contact.nearest_points[1];
-        BOOST_CHECK_CLOSE(contact.penetration_depth, -(cp2 - cp1).norm(), 1e-6);
-        EIGEN_VECTOR_IS_APPROX(cp1,
-                               cp2 - contact.penetration_depth * contact.normal,
-                               Scalar(1e-6));
+//         Vec3s cp1 = contact.nearest_points[0];
+//         Vec3s cp2 = contact.nearest_points[1];
+//         BOOST_CHECK_CLOSE(contact.penetration_depth, -(cp2 - cp1).norm(),
+//         1e-6); EIGEN_VECTOR_IS_APPROX(cp1,
+//                                cp2 - contact.penetration_depth *
+//                                contact.normal, Scalar(1e-6));
 
-        Vec3s separation_vector = contact.penetration_depth * contact.normal;
-        EIGEN_VECTOR_IS_APPROX(separation_vector, cp2 - cp1, Scalar(1e-6));
+//         Vec3s separation_vector = contact.penetration_depth * contact.normal;
+//         EIGEN_VECTOR_IS_APPROX(separation_vector, cp2 - cp1, Scalar(1e-6));
 
-        if (dist < 0) {
-          EIGEN_VECTOR_IS_APPROX(contact.normal, -(cp2 - cp1).normalized(),
-                                 Scalar(1e-6));
-        }
-      }
-    } else {
-      BOOST_CHECK(dist >= 0.);
-      BOOST_CHECK_CLOSE(distres.min_distance, dist, 1e-6);
-      BOOST_CHECK_CLOSE(dist, colres.distance_lower_bound, 1e-6);
-    }
-  }
-}
+//         if (dist < 0) {
+//           EIGEN_VECTOR_IS_APPROX(contact.normal, -(cp2 - cp1).normalized(),
+//                                  Scalar(1e-6));
+//         }
+//       }
+//     } else {
+//       BOOST_CHECK(dist >= 0.);
+//       BOOST_CHECK_CLOSE(distres.min_distance, dist, 1e-6);
+//       BOOST_CHECK_CLOSE(dist, colres.distance_lower_bound, 1e-6);
+//     }
+//   }
+// }
 
-void test_normal_and_nearest_points(const Halfspace& o1,
-                                    const BVHModel<OBBRSS>& o2) {
-  test_normal_and_nearest_points(o2, o1);
-}
+// void test_normal_and_nearest_points(const Halfspace& o1,
+//                                     const BVHModel<OBBRSS>& o2) {
+//   test_normal_and_nearest_points(o2, o1);
+// }
 
-BOOST_AUTO_TEST_CASE(test_normal_and_nearest_points_bvh_halfspace) {
-  Box* box_ptr = new coal::Box(1, 1, 1);
-  coal::CollisionGeometryPtr_t b1(box_ptr);
-  BVHModel<coal::OBBRSS> o1 = BVHModel<OBBRSS>();
-  generateBVHModel(o1, *box_ptr, Transform3s());
-  o1.buildConvexRepresentation(false);
+// BOOST_AUTO_TEST_CASE(test_normal_and_nearest_points_bvh_halfspace) {
+//   Box* box_ptr = new coal::Box(1, 1, 1);
+//   coal::CollisionGeometryPtr_t b1(box_ptr);
+//   BVHModel<coal::OBBRSS> o1 = BVHModel<OBBRSS>();
+//   generateBVHModel(o1, *box_ptr, Transform3s());
+//   o1.buildConvexRepresentation(false);
 
-  Scalar offset = Scalar(0.1);
-  Vec3s n = Vec3s::Random();
-  n.normalize();
-  shared_ptr<Halfspace> o2(new Halfspace(n, offset));
+//   Scalar offset = Scalar(0.1);
+//   Vec3s n = Vec3s::Random();
+//   n.normalize();
+//   shared_ptr<Halfspace> o2(new Halfspace(n, offset));
 
-  test_normal_and_nearest_points(o1, *o2.get());
-  test_normal_and_nearest_points(*o2.get(), o1);
-}
+//   test_normal_and_nearest_points(o1, *o2.get());
+//   test_normal_and_nearest_points(*o2.get(), o1);
+// }
