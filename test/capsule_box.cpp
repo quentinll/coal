@@ -344,5 +344,13 @@ BOOST_AUTO_TEST_CASE(contact_points_capsule_box) {
     BOOST_CHECK_CLOSE(cp1[0], distanceResult.nearest_points[0][0], 1e-1);
     BOOST_CHECK_CLOSE(cp1[1], distanceResult.nearest_points[0][1], 1e-1);
     BOOST_CHECK_CLOSE(cp1[2], distanceResult.nearest_points[0][2], 1e-1);
+    // Check null distance when moving the capsule along the separation vector
+    coal::Vec3s separation_vector = normal * distance;
+    coal::Transform3s tf1_sep = tf1;
+    tf1_sep.setTranslation(tf1.getTranslation() + separation_vector);
+    capsule.setTransform(tf1_sep);
+    distanceResult.clear();
+    coal::distance(&capsule, &box, distanceRequest, distanceResult);
+    CHECK_CLOSE_TO_0(distanceResult.min_distance, 1e-1);
   }
 }
