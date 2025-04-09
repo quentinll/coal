@@ -49,7 +49,25 @@
 
 #include "utility.h"
 
+using coal::generateRandomTransform;
 using coal::Scalar;
+using coal::Transform3s;
+
+template <int VecSize>
+Eigen::Matrix<Scalar, VecSize, 1> generateRandomVector(Scalar min, Scalar max) {
+  typedef Eigen::Matrix<Scalar, VecSize, 1> VecType;
+  // Generate a random vector in the [min, max] range
+  VecType v = VecType::Random() * (max - min) * 0.5 +
+              VecType::Ones() * (max + min) * 0.5;
+  return v;
+}
+
+Scalar generateRandomNumber(Scalar min, Scalar max) {
+  Scalar r = static_cast<Scalar>(rand()) / static_cast<Scalar>(RAND_MAX);
+  r = 2 * r - 1;
+  const Scalar half(0.5);
+  return r * (max - min) * half + (max + min) * half;
+}
 
 BOOST_AUTO_TEST_CASE(distance_capsule_box) {
   using coal::CollisionGeometryPtr_t;
@@ -267,4 +285,64 @@ BOOST_AUTO_TEST_CASE(contact_points_sphere_box) {
   //           << std::endl;
   // std::cout << "o1: " << o1.transpose() << std::endl;
   // std::cout << "o2: " << o2.transpose() << std::endl;
+}
+
+BOOST_AUTO_TEST_CASE(contact_points_capsule_box) {
+  using coal::CollisionGeometryPtr_t;
+  using coal::CollisionObject;
+  std::size_t n_tests = 346;
+  for (std::size_t i = 0; i < n_tests; ++i) {
+    std::cout << "================" << std::endl;
+    std::cout << "Test " << i << std::endl;
+    std::cout << "================" << std::endl;
+    Scalar h = generateRandomNumber(Scalar(0.15), 1);
+    CollisionGeometryPtr_t boxGeometry(
+        new coal::Box(generateRandomVector<3>(Scalar(0.05), 1)));
+    Scalar radius = generateRandomNumber(Scalar(0.05), 1);
+    CollisionGeometryPtr_t capsuleGeometry(new coal::Capsule(radius, h));
+    // Generate a ball of the same radius for checking the result
+    CollisionGeometryPtr_t sphereGeometry(new coal::Sphere(radius));
+    coal::Transform3s tf1, tf2, tf3;
+
+    CollisionObject capsule(capsuleGeometry, tf1);
+    CollisionObject box(boxGeometry, tf2);
+    CollisionObject sphere(sphereGeometry, tf3);
+
+    // Generate a random transform
+    Scalar extents[] = {-1.5, -1.5, -1.5, 1.5, 1.5, 1.5};
+    generateRandomTransform(extents, tf1);
+    generateRandomTransform(extents, tf2);
+
+    capsule.setTransform(tf1);
+    box.setTransform(tf2);
+    // Test distance
+    coal::DistanceRequest distanceRequest(true, 0, 0);
+    coal::DistanceResult distanceResult;
+    coal::distance(&capsule, &box, distanceRequest, distanceResult);
+    // Check the result against the sphere
+    Scalar distance = distanceResult.min_distance;
+    coal::Vec3s normal = distanceResult.normal;
+    coal::Vec3s cp1 = distanceResult.nearest_points[0];
+    tf3 = tf1;
+    tf3.setTranslation(cp1 - normal * radius);
+    sphere.setTransform(tf3);
+    distanceResult.clear();
+    coal::distance(&sphere, &box, distanceRequest, distanceResult);
+    Scalar distance_sphere = distanceResult.min_distance;
+    coal::Vec3s normal_sphere = distanceResult.normal;
+    std::cout << "distance: " << distance << std::endl;
+    std::cout << "distance_sphere: " << distance_sphere << std::endl;
+    std::cout << "normal: " << normal.transpose() << std::endl;
+    std::cout << "normal_sphere: " << normal_sphere.transpose() << std::endl;
+    std::cout << "cp1: " << cp1.transpose() << std::endl;
+    std::cout << "cp1_sphere: " << distanceResult.nearest_points[0].transpose()
+              << std::endl;
+    BOOST_CHECK_CLOSE(distance, distance_sphere, 1e-1);
+    BOOST_CHECK_CLOSE(normal[0], normal_sphere[0], 1e-1);
+    BOOST_CHECK_CLOSE(normal[1], normal_sphere[1], 1e-1);
+    BOOST_CHECK_CLOSE(normal[2], normal_sphere[2], 1e-1);
+    BOOST_CHECK_CLOSE(cp1[0], distanceResult.nearest_points[0][0], 1e-1);
+    BOOST_CHECK_CLOSE(cp1[1], distanceResult.nearest_points[0][1], 1e-1);
+    BOOST_CHECK_CLOSE(cp1[2], distanceResult.nearest_points[0][2], 1e-1);
+  }
 }
