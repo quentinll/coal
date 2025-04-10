@@ -911,6 +911,7 @@ inline void segmentBoxQuery(const Vec3s& s, const Vec3s& e, const Vec3s& b,
   Vec3s d = e - s;
   Scalar t_line;
   lineBoxQuery(o, d, b, closest, t_line);
+  std::cout << "t_line: " << t_line << std::endl;
 
   // If closest is within the segment, return that result directly
   if (t_line >= 0. && t_line <= 1.) {
@@ -929,6 +930,217 @@ struct LineSegment {
   Vec3s b;  ///< Second endpoint
 };
 
+// /// @brief Computes the distance between a line segment and a box
+// /// @param s1 The line segment
+// /// @param tf1 The transform of the line segment
+// /// @param s2 The box
+// /// @param tf2 The transform of the box
+// /// @param[out] p1 The closest point on the line segment
+// /// @param[out] p2 The closest point on the box
+// /// @param[out] normal The normal vector from box to segment
+// /// @return The distance between the shapes (negative if penetration)
+// inline Scalar segmentBoxDistance(const LineSegment& s1, const Transform3s&
+// tf1,
+//                                  const Box& s2, const Transform3s& tf2,
+//                                  Vec3s& p1, Vec3s& p2, Vec3s& normal) {
+//   // Transform segment to box frame
+//   Vec3s s =
+//       tf2.rotation().transpose() * (tf1.transform(s1.a) - tf2.translation());
+//   Vec3s e =
+//       tf2.rotation().transpose() * (tf1.transform(s1.b) - tf2.translation());
+
+//   // Get closest points
+//   Scalar t;
+//   segmentBoxQuery(s, e, s2.halfSide, p2, t);
+//   std::cout << "t: " << t << std::endl;
+//   p1 = s + (e - s) * t;
+//   // TODO: avoid this boolean computation as the info may be already
+//   available bool is_in_box = (p1.array().abs() <= s2.halfSide.array()).all();
+//   // Compute normal and distance
+//   normal = p2 - p1;
+//   Scalar dist = normal.norm();
+//   if (is_in_box) dist *= Scalar(-1);
+//   if (std::abs(dist) > Eigen::NumTraits<Scalar>::epsilon())
+//     normal /= dist;
+//   else {
+//     // We determine on which face(s) p2 is
+//     // TODO: this could also be avoided by using previously computed info
+//     normal = ((s2.halfSide - p2.cwiseAbs()).array() <
+//               Eigen::NumTraits<Scalar>::epsilon())
+//                  .cast<Scalar>();
+//     normal.normalize();
+//     normal.array() *= -p2.array().sign();
+//   }
+//   // Transform back to world frame
+//   p1 = tf2.rotation() * p1 + tf2.translation();
+//   p2 = tf2.rotation() * p2 + tf2.translation();
+//   normal = tf2.rotation() * normal;
+
+//   return dist;
+// }
+
+namespace segmentBox {
+
+using Mat63s = Eigen::Matrix<Scalar, 6, 3>;
+
+enum supportAxis { X = 0, Y = 1, Z = 2 };
+
+/// @brief Projects a point onto a line segment
+/// @param point The point to project
+/// @param segmentStart The start point of the line segment
+/// @param segmentEnd The end point of the line segment
+/// @param[out] projectedPoint The projected point on the line segment
+template <typename pointVectorLike, typename projectedPointVectorLike>
+inline void projectPointOnSegment(
+    const Eigen::MatrixBase<pointVectorLike>& point, const LineSegment& s1,
+    const Eigen::MatrixBase<projectedPointVectorLike>& projectedPoint) {
+  Vec3s v = s1.b - s1.a;
+  Vec3s w = point;
+  w -= s1.a;
+
+  Scalar c1 = w.dot(v);
+  Scalar c2 = v.dot(v);
+
+  if (c1 <= 0) {
+    projectedPoint.const_cast_derived() = s1.a;
+  } else if (c2 <= c1) {
+    projectedPoint.const_cast_derived() = s1.b;
+  } else {
+    Scalar b = c1 / c2;
+    projectedPoint.const_cast_derived() = s1.a + v * b;
+  }
+}
+
+template <supportAxis axis, typename positiveVectorLike,
+          typename negativeVectorLike>
+inline void segmentSupport(
+    const Vec3s& s, const Vec3s& e,
+    const Eigen::MatrixBase<positiveVectorLike>& positive_support,
+    const Eigen::MatrixBase<negativeVectorLike>& negative_support) {
+  if (s[axis] > e[axis]) {
+    positive_support.const_cast_derived() = s;
+    negative_support.const_cast_derived() = e;
+  } else {
+    positive_support.const_cast_derived() = e;
+    negative_support.const_cast_derived() = s;
+  }
+}
+
+inline void boxWitnessPoints(Mat63s& support_points, const Vec3s& half_side) {
+  // X-axis support points
+  support_points(0, 0) = -half_side[0];
+  support_points(0, 1) =
+      std::max(std::min(-half_side[1], support_points(0, 1)), half_side[1]);
+  support_points(0, 2) =
+      std::max(std::min(-half_side[2], support_points(0, 2)), half_side[2]);
+
+  support_points(1, 0) = half_side[0];
+  support_points(1, 1) =
+      std::max(std::min(-half_side[1], support_points(1, 1)), half_side[1]);
+  support_points(1, 2) =
+      std::max(std::min(-half_side[2], support_points(1, 2)), half_side[2]);
+
+  // Y-axis support points
+  support_points(2, 1) = -half_side[1];
+  support_points(2, 0) =
+      std::max(std::min(-half_side[0], support_points(2, 0)), half_side[0]);
+  support_points(2, 2) =
+      std::max(std::min(-half_side[2], support_points(2, 2)), half_side[2]);
+
+  support_points(3, 1) = half_side[1];
+  support_points(3, 0) =
+      std::max(std::min(-half_side[0], support_points(3, 0)), half_side[0]);
+  support_points(3, 2) =
+      std::max(std::min(-half_side[2], support_points(3, 2)), half_side[2]);
+
+  // Z-axis support points
+  support_points(4, 2) = -half_side[2];
+  support_points(4, 0) =
+      std::max(std::min(-half_side[0], support_points(4, 0)), half_side[0]);
+  support_points(4, 1) =
+      std::max(std::min(-half_side[1], support_points(4, 1)), half_side[1]);
+
+  support_points(5, 2) = half_side[2];
+  support_points(5, 0) =
+      std::max(std::min(-half_side[0], support_points(5, 0)), half_side[0]);
+  support_points(5, 1) =
+      std::max(std::min(-half_side[1], support_points(5, 1)), half_side[1]);
+}
+
+inline void segmentWitnessPoints(const Mat63s& box_support_points,
+                                 const LineSegment& s1,
+                                 Mat63s& segment_witness_points) {
+  for (std::size_t i = 0; i < 6; ++i) {
+    projectPointOnSegment(box_support_points.row(i), s1,
+                          segment_witness_points.row(i));
+  }
+}
+
+inline void signedDistances(const Mat63s& box_witness_points,
+                            const Mat63s& segment_witness_points,
+                            Vec6s& dists) {
+  Vec3s separation_vector = segment_witness_points.row(0);
+  separation_vector -= box_witness_points.row(0);
+  bool is_inside = separation_vector(0) > 0;
+  dists[0] = separation_vector.norm();
+  if (is_inside) dists[0] *= -1;
+
+  separation_vector = segment_witness_points.row(1);
+  separation_vector -= box_witness_points.row(1);
+  is_inside = separation_vector(0) < 0;
+  dists[1] = separation_vector.norm();
+  if (is_inside) dists[1] *= -1;
+
+  separation_vector = segment_witness_points.row(2);
+  separation_vector -= box_witness_points.row(2);
+  is_inside = separation_vector(1) > 0;
+  dists[2] = separation_vector.norm();
+  if (is_inside) dists[2] *= -1;
+
+  separation_vector = segment_witness_points.row(3);
+  separation_vector -= box_witness_points.row(3);
+  is_inside = separation_vector(1) < 0;
+  dists[3] = separation_vector.norm();
+  if (is_inside) dists[3] *= -1;
+
+  separation_vector = segment_witness_points.row(4);
+  separation_vector -= box_witness_points.row(4);
+  is_inside = separation_vector(2) > 0;
+  dists[4] = separation_vector.norm();
+  if (is_inside) dists[4] *= -1;
+
+  separation_vector = segment_witness_points.row(5);
+  separation_vector -= box_witness_points.row(5);
+  is_inside = separation_vector(2) < 0;
+  dists[5] = separation_vector.norm();
+  if (is_inside) dists[5] *= -1;
+}
+
+inline void getNormalFromFaceIndex(const std::size_t face_index,
+                                   Vec3s& normal) {
+  switch (face_index) {
+    case 0:
+      normal = Vec3s(-1, 0, 0);
+      break;
+    case 1:
+      normal = Vec3s(1, 0, 0);
+      break;
+    case 2:
+      normal = Vec3s(0, -1, 0);
+      break;
+    case 3:
+      normal = Vec3s(0, 1, 0);
+      break;
+    case 4:
+      normal = Vec3s(0, 0, -1);
+      break;
+    case 5:
+      normal = Vec3s(0, 0, 1);
+      break;
+  }
+}
+}  // namespace segmentBox
+
 /// @brief Computes the distance between a line segment and a box
 /// @param s1 The line segment
 /// @param tf1 The transform of the line segment
@@ -941,6 +1153,13 @@ struct LineSegment {
 inline Scalar segmentBoxDistance(const LineSegment& s1, const Transform3s& tf1,
                                  const Box& s2, const Transform3s& tf2,
                                  Vec3s& p1, Vec3s& p2, Vec3s& normal) {
+  using segmentBox::boxWitnessPoints;
+  using segmentBox::getNormalFromFaceIndex;
+  using segmentBox::Mat63s;
+  using segmentBox::segmentSupport;
+  using segmentBox::segmentWitnessPoints;
+  using segmentBox::signedDistances;
+  using segmentBox::supportAxis;
   // Transform segment to box frame
   Vec3s s =
       tf2.rotation().transpose() * (tf1.transform(s1.a) - tf2.translation());
@@ -948,25 +1167,50 @@ inline Scalar segmentBoxDistance(const LineSegment& s1, const Transform3s& tf1,
       tf2.rotation().transpose() * (tf1.transform(s1.b) - tf2.translation());
 
   // Get closest points
-  Scalar t;
-  segmentBoxQuery(s, e, s2.halfSide, p2, t);
-  p1 = s + (e - s) * t;
-  // TODO: avoid this boolean computation as the info may be already available
-  bool is_in_box = (p1.array().abs() <= s2.halfSide.array()).all();
+  Mat63s support_points, segment_witness_points;
+  segmentSupport<supportAxis::X>(s, e, support_points.row(0),
+                                 support_points.row(1));
+  segmentSupport<supportAxis::Y>(s, e, support_points.row(2),
+                                 support_points.row(3));
+  segmentSupport<supportAxis::Z>(s, e, support_points.row(4),
+                                 support_points.row(5));
+
+  boxWitnessPoints(support_points, s2.halfSide);
+
+  segmentWitnessPoints(support_points, s1, segment_witness_points);
+
+  Vec6s dists;
+  signedDistances(support_points, segment_witness_points, dists);
+
+  std::size_t face_index = 0;
+  Scalar dist = dists[0];
+  for (std::size_t i = 1; i < 6; ++i) {
+    if (dist < 0) {
+      if (dists[i] > dist && dists[i] <= 0) {
+        dist = dists[i];
+        face_index = i;
+      }
+    } else {
+      if (dists[i] < dist) {
+        dist = dists[i];
+        face_index = i;
+      }
+    }
+  }
+
+  p1 = segment_witness_points.row(face_index);
+  p2 = support_points.row(face_index);
+
+  bool is_in_box = dist <= 0;
+  COAL_UNUSED_VARIABLE(is_in_box);
+  assert(is_in_box == ((p1.array().abs() <= s2.halfSide.array()).all()));
   // Compute normal and distance
   normal = p2 - p1;
-  Scalar dist = normal.norm();
-  if (is_in_box) dist *= Scalar(-1);
   if (std::abs(dist) > Eigen::NumTraits<Scalar>::epsilon())
     normal /= dist;
   else {
     // We determine on which face(s) p2 is
-    // TODO: this could also be avoided by using previously computed info
-    normal = ((s2.halfSide - p2.cwiseAbs()).array() <
-              Eigen::NumTraits<Scalar>::epsilon())
-                 .cast<Scalar>();
-    normal.normalize();
-    normal.array() *= -p2.array().sign();
+    getNormalFromFaceIndex(face_index, normal);
   }
   // Transform back to world frame
   p1 = tf2.rotation() * p1 + tf2.translation();
