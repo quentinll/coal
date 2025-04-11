@@ -942,8 +942,9 @@ inline Scalar segmentBoxDistance(const LineSegment& s1, const Transform3s& tf1,
   std::size_t face_index = 0;
   Scalar dist = dists[0];
   for (std::size_t i = 1; i < 6; ++i) {
-    if (dist < 0) {
-      if (dists[i] > dist && dists[i] <= 0) {
+    if (dist <= std::numeric_limits<Scalar>::epsilon()) {
+      if (dists[i] > dist &&
+          dists[i] <= std::numeric_limits<Scalar>::epsilon()) {
         dist = dists[i];
         face_index = i;
       }

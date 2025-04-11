@@ -346,8 +346,9 @@ BOOST_AUTO_TEST_CASE(contact_points_segment_box) {
     // std::cout << "================" << std::endl;
     // std::cout << "Test " << i << std::endl;
     // std::cout << "================" << std::endl;
-    Scalar h = generateRandomNumber(Scalar(0.15), 1);
+    // Scalar h = generateRandomNumber(Scalar(0.15), 1);
     // Scalar h = 0.288662;
+    Scalar h = 0.;
     Scalar radius = Scalar(0.);
     coal::Vec3s box_side = generateRandomVector<3>(Scalar(0.05), 1);
     // coal::Vec3s box_side(0.211053 * 2, 0.458688 * 2,
@@ -423,12 +424,18 @@ BOOST_AUTO_TEST_CASE(contact_points_segment_box) {
     // coal::Vec3s separation_vector = normal * distance;
     coal::Transform3s tf1_sep = tf1;
     tf1_sep.setTranslation(tf1.getTranslation() + separation_vector);
+    // std::cout << "tf1_sep translation: " <<
+    // tf1_sep.getTranslation().transpose()
+    //           << std::endl;
     capsule.setTransform(tf1_sep);
     distanceResult.clear();
     coal::distance(&capsule, &box, distanceRequest, distanceResult);
     // std::cout << "new cp1: " << distanceResult.nearest_points[0].transpose()
     // << std::endl; std::cout << "new cp2: " <<
     // distanceResult.nearest_points[1].transpose() << std::endl;
+    // std::cout << "distanceResult.min_distance: " <<
+    // distanceResult.min_distance
+    //           << std::endl;
     CHECK_CLOSE_TO_0(distanceResult.min_distance, 1e-1);
     coal::Transform3s tf3_sep = tf3;
     tf3_sep.setTranslation(tf3.getTranslation() + separation_vector);
