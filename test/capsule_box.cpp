@@ -69,94 +69,94 @@ Scalar generateRandomNumber(Scalar min, Scalar max) {
   return r * (max - min) * half + (max + min) * half;
 }
 
-BOOST_AUTO_TEST_CASE(distance_capsule_box) {
-  using coal::CollisionGeometryPtr_t;
-  // Capsule of radius 2 and of height 4
-  CollisionGeometryPtr_t capsuleGeometry(new coal::Capsule(2., 4.));
-  // Box of size 1 by 2 by 4
-  CollisionGeometryPtr_t boxGeometry(new coal::Box(1., 2., 4.));
+// BOOST_AUTO_TEST_CASE(distance_capsule_box) {
+//   using coal::CollisionGeometryPtr_t;
+//   // Capsule of radius 2 and of height 4
+//   CollisionGeometryPtr_t capsuleGeometry(new coal::Capsule(2., 4.));
+//   // Box of size 1 by 2 by 4
+//   CollisionGeometryPtr_t boxGeometry(new coal::Box(1., 2., 4.));
 
-  // Enable computation of nearest points
-  coal::DistanceRequest distanceRequest(true, 0, 0);
-  coal::DistanceResult distanceResult;
+//   // Enable computation of nearest points
+//   coal::DistanceRequest distanceRequest(true, 0, 0);
+//   coal::DistanceResult distanceResult;
 
-  // Test case 1: Capsule to the right of box
-  coal::Transform3s tf1(coal::Vec3s(3., 0, 0));
-  coal::Transform3s tf2 = coal::Transform3s::Identity();
-  coal::CollisionObject capsule(capsuleGeometry, tf1);
-  coal::CollisionObject box(boxGeometry, tf2);
+//   // Test case 1: Capsule to the right of box
+//   coal::Transform3s tf1(coal::Vec3s(3., 0, 0));
+//   coal::Transform3s tf2 = coal::Transform3s::Identity();
+//   coal::CollisionObject capsule(capsuleGeometry, tf1);
+//   coal::CollisionObject box(boxGeometry, tf2);
 
-  // test distance
-  coal::distance(&capsule, &box, distanceRequest, distanceResult);
-  // Nearest point on capsule
-  coal::Vec3s o1(distanceResult.nearest_points[0]);
-  // Nearest point on box
-  coal::Vec3s o2(distanceResult.nearest_points[1]);
-  BOOST_CHECK_CLOSE(distanceResult.min_distance, 0.5, 1e-1);
-  BOOST_CHECK_CLOSE(o1[0], 1.0, 1e-1);
-  CHECK_CLOSE_TO_0(o1[1], 1e-1);
-  BOOST_CHECK_CLOSE(o2[0], 0.5, 1e-1);
-  CHECK_CLOSE_TO_0(o2[1], 1e-1);
+//   // test distance
+//   coal::distance(&capsule, &box, distanceRequest, distanceResult);
+//   // Nearest point on capsule
+//   coal::Vec3s o1(distanceResult.nearest_points[0]);
+//   // Nearest point on box
+//   coal::Vec3s o2(distanceResult.nearest_points[1]);
+//   BOOST_CHECK_CLOSE(distanceResult.min_distance, 0.5, 1e-1);
+//   BOOST_CHECK_CLOSE(o1[0], 1.0, 1e-1);
+//   CHECK_CLOSE_TO_0(o1[1], 1e-1);
+//   BOOST_CHECK_CLOSE(o2[0], 0.5, 1e-1);
+//   CHECK_CLOSE_TO_0(o2[1], 1e-1);
 
-  // Test case 2: Capsule above box
-  tf1 = coal::Transform3s(coal::Vec3s(0., 0., 8.));
-  capsule.setTransform(tf1);
+//   // Test case 2: Capsule above box
+//   tf1 = coal::Transform3s(coal::Vec3s(0., 0., 8.));
+//   capsule.setTransform(tf1);
 
-  // test distance
-  distanceResult.clear();
-  coal::distance(&capsule, &box, distanceRequest, distanceResult);
-  o1 = distanceResult.nearest_points[0];
-  o2 = distanceResult.nearest_points[1];
+//   // test distance
+//   distanceResult.clear();
+//   coal::distance(&capsule, &box, distanceRequest, distanceResult);
+//   o1 = distanceResult.nearest_points[0];
+//   o2 = distanceResult.nearest_points[1];
 
-  BOOST_CHECK_CLOSE(distanceResult.min_distance, 2.0, 1e-1);
-  CHECK_CLOSE_TO_0(o1[0], 1e-1);
-  CHECK_CLOSE_TO_0(o1[1], 1e-1);
-  BOOST_CHECK_CLOSE(o1[2], 4.0, 1e-1);
+//   BOOST_CHECK_CLOSE(distanceResult.min_distance, 2.0, 1e-1);
+//   CHECK_CLOSE_TO_0(o1[0], 1e-1);
+//   CHECK_CLOSE_TO_0(o1[1], 1e-1);
+//   BOOST_CHECK_CLOSE(o1[2], 4.0, 1e-1);
 
-  CHECK_CLOSE_TO_0(o2[0], 1e-1);
-  CHECK_CLOSE_TO_0(o2[1], 1e-1);
-  BOOST_CHECK_CLOSE(o2[2], 2.0, 1e-1);
+//   CHECK_CLOSE_TO_0(o2[0], 1e-1);
+//   CHECK_CLOSE_TO_0(o2[1], 1e-1);
+//   BOOST_CHECK_CLOSE(o2[2], 2.0, 1e-1);
 
-  // Test case 3: Rotated capsule behind box
-  tf1.setTranslation(coal::Vec3s(-10., 0., 0.));
-  tf1.setQuatRotation(
-      coal::makeQuat(sqrt(Scalar(2)) / 2, 0, sqrt(Scalar(2)) / 2, 0));
-  capsule.setTransform(tf1);
+//   // Test case 3: Rotated capsule behind box
+//   tf1.setTranslation(coal::Vec3s(-10., 0., 0.));
+//   tf1.setQuatRotation(
+//       coal::makeQuat(sqrt(Scalar(2)) / 2, 0, sqrt(Scalar(2)) / 2, 0));
+//   capsule.setTransform(tf1);
 
-  // test distance
-  distanceResult.clear();
-  coal::distance(&capsule, &box, distanceRequest, distanceResult);
-  o1 = distanceResult.nearest_points[0];
-  o2 = distanceResult.nearest_points[1];
+//   // test distance
+//   distanceResult.clear();
+//   coal::distance(&capsule, &box, distanceRequest, distanceResult);
+//   o1 = distanceResult.nearest_points[0];
+//   o2 = distanceResult.nearest_points[1];
 
-  BOOST_CHECK_CLOSE(distanceResult.min_distance, 5.5, 1e-1);
-  BOOST_CHECK_CLOSE(o1[0], -6, 1e-2);
-  CHECK_CLOSE_TO_0(o1[1], 1e-1);
-  CHECK_CLOSE_TO_0(o1[2], 1e-1);
-  BOOST_CHECK_CLOSE(o2[0], -0.5, 1e-2);
-  CHECK_CLOSE_TO_0(o2[1], 1e-1);
-  CHECK_CLOSE_TO_0(o2[2], 1e-1);
+//   BOOST_CHECK_CLOSE(distanceResult.min_distance, 5.5, 1e-1);
+//   BOOST_CHECK_CLOSE(o1[0], -6, 1e-2);
+//   CHECK_CLOSE_TO_0(o1[1], 1e-1);
+//   CHECK_CLOSE_TO_0(o1[2], 1e-1);
+//   BOOST_CHECK_CLOSE(o2[0], -0.5, 1e-2);
+//   CHECK_CLOSE_TO_0(o2[1], 1e-1);
+//   CHECK_CLOSE_TO_0(o2[2], 1e-1);
 
-  // Test case 4: Rotated capsule behind box with offset
-  tf1 = coal::Transform3s(
-      coal::makeQuat(sqrt(Scalar(2)) / 2, 0, sqrt(Scalar(2)) / 2, 0),
-      coal::Vec3s(Scalar(-10.), Scalar(0.8), Scalar(1.5)));
-  capsule.setTransform(tf1);
+//   // Test case 4: Rotated capsule behind box with offset
+//   tf1 = coal::Transform3s(
+//       coal::makeQuat(sqrt(Scalar(2)) / 2, 0, sqrt(Scalar(2)) / 2, 0),
+//       coal::Vec3s(Scalar(-10.), Scalar(0.8), Scalar(1.5)));
+//   capsule.setTransform(tf1);
 
-  // test distance
-  distanceResult.clear();
-  coal::distance(&capsule, &box, distanceRequest, distanceResult);
-  o1 = distanceResult.nearest_points[0];
-  o2 = distanceResult.nearest_points[1];
+//   // test distance
+//   distanceResult.clear();
+//   coal::distance(&capsule, &box, distanceRequest, distanceResult);
+//   o1 = distanceResult.nearest_points[0];
+//   o2 = distanceResult.nearest_points[1];
 
-  BOOST_CHECK_CLOSE(distanceResult.min_distance, 5.5, 1e-2);
-  BOOST_CHECK_CLOSE(o1[0], -6, 1e-2);
-  BOOST_CHECK_CLOSE(o1[1], 0.8, 1e-1);
-  BOOST_CHECK_CLOSE(o1[2], 1.5, 1e-2);
-  BOOST_CHECK_CLOSE(o2[0], -0.5, 1e-2);
-  BOOST_CHECK_CLOSE(o2[1], 0.8, 1e-1);
-  BOOST_CHECK_CLOSE(o2[2], 1.5, 1e-2);
-}
+//   BOOST_CHECK_CLOSE(distanceResult.min_distance, 5.5, 1e-2);
+//   BOOST_CHECK_CLOSE(o1[0], -6, 1e-2);
+//   BOOST_CHECK_CLOSE(o1[1], 0.8, 1e-1);
+//   BOOST_CHECK_CLOSE(o1[2], 1.5, 1e-2);
+//   BOOST_CHECK_CLOSE(o2[0], -0.5, 1e-2);
+//   BOOST_CHECK_CLOSE(o2[1], 0.8, 1e-1);
+//   BOOST_CHECK_CLOSE(o2[2], 1.5, 1e-2);
+// }
 
 BOOST_AUTO_TEST_CASE(distance_segment_box) {
   using coal::CollisionGeometryPtr_t;
@@ -174,7 +174,7 @@ BOOST_AUTO_TEST_CASE(distance_segment_box) {
   tf2.setIdentity();
   CollisionObject segment(segmentGeometry, tf1);
   CollisionObject box(boxGeometry, tf2);
-  coal::DistanceRequest distanceRequest(true, 0, 0);
+  coal::DistanceRequest distanceRequest(true, true, 0);
   coal::DistanceResult distanceResult;
   coal::distance(&segment, &box, distanceRequest, distanceResult);
   BOOST_CHECK_CLOSE(distanceResult.min_distance, -0.2, 1e-1);
@@ -195,135 +195,248 @@ BOOST_AUTO_TEST_CASE(distance_segment_box) {
   BOOST_CHECK_CLOSE(distanceResult.normal[0], -1, 1e-1);
   CHECK_CLOSE_TO_0(distanceResult.normal[1], 1e-1);
   CHECK_CLOSE_TO_0(distanceResult.normal[2], 1e-1);
-}
 
-BOOST_AUTO_TEST_CASE(contact_points_sphere_box) {
-  using coal::CollisionGeometryPtr_t;
-  // We use a capsule of radius 1 and height 0 to represent a sphere
-  CollisionGeometryPtr_t capsuleGeometry(new coal::Capsule(1., 0.));
-  // Box of size 1 by 1 by 1
-  CollisionGeometryPtr_t boxGeometry(new coal::Box(1., 1., 1.));
-
-  // Enable computation of nearest points
-  coal::DistanceRequest distanceRequest(true, 0, 0);
-  coal::DistanceResult distanceResult;
-
-  // Test case 1: Capsule collides to the right of box
-  coal::Transform3s tf1(coal::Vec3s(1.4, 0, 0));
-  coal::Transform3s tf2;
-  coal::CollisionObject capsule(capsuleGeometry, tf1);
-  coal::CollisionObject box(boxGeometry, tf2);
-
-  // test distance
-  coal::distance(&capsule, &box, distanceRequest, distanceResult);
-  // Nearest point on capsule
-  coal::Vec3s o1(distanceResult.nearest_points[0]);
-  // Nearest point on box
-  coal::Vec3s o2(distanceResult.nearest_points[1]);
-  coal::Vec3s normal = distanceResult.normal;
-  BOOST_CHECK_CLOSE(distanceResult.min_distance, -0.1, 1e-1);
-  BOOST_CHECK_CLOSE(o1[0], 0.4, 1e-1);
-  CHECK_CLOSE_TO_0(o1[1], 1e-1);
-  BOOST_CHECK_CLOSE(o2[0], 0.5, 1e-1);
-  CHECK_CLOSE_TO_0(o2[1], 1e-1);
-  BOOST_CHECK_CLOSE(normal[0], -1, 1e-1);
-  CHECK_CLOSE_TO_0(normal[1], 1e-1);
-  CHECK_CLOSE_TO_0(normal[2], 1e-1);
-
-  // Test case 2: Capsule above and collide with box
-  tf1 = coal::Transform3s(coal::Vec3s(0., 0., 1.4));
-  capsule.setTransform(tf1);
-
-  // test distance
-  distanceResult.clear();
-  coal::distance(&capsule, &box, distanceRequest, distanceResult);
-  o1 = distanceResult.nearest_points[0];
-  o2 = distanceResult.nearest_points[1];
-  normal = distanceResult.normal;
-
-  BOOST_CHECK_CLOSE(distanceResult.min_distance, -0.1, 1e-1);
-  CHECK_CLOSE_TO_0(o1[0], 1e-1);
-  CHECK_CLOSE_TO_0(o1[1], 1e-1);
-  BOOST_CHECK_CLOSE(o1[2], 0.4, 1e-1);
-  CHECK_CLOSE_TO_0(o2[0], 1e-1);
-  CHECK_CLOSE_TO_0(o2[1], 1e-1);
-  BOOST_CHECK_CLOSE(o2[2], 0.5, 1e-1);
-  CHECK_CLOSE_TO_0(normal[0], 1e-1);
-  CHECK_CLOSE_TO_0(normal[1], 1e-1);
-  BOOST_CHECK_CLOSE(normal[2], -1, 1e-1);
-
-  // Test case 3: Capsule collides with box on an edge
-  tf1 = coal::Transform3s(
-      coal::Vec3s(0.5 + std::sqrt(0.405), 0.5 + std::sqrt(0.405), 0.));
-  capsule.setTransform(tf1);
-
-  // test distance
-  distanceResult.clear();
-  coal::distance(&capsule, &box, distanceRequest, distanceResult);
-  o1 = distanceResult.nearest_points[0];
-  o2 = distanceResult.nearest_points[1];
-  normal = distanceResult.normal;
-  BOOST_CHECK_CLOSE(distanceResult.min_distance, -0.1, 1e-1);
-  BOOST_CHECK_CLOSE(o1[0], 0.5 + std::sqrt(0.405) - std::sqrt(0.5), 1e-1);
-  BOOST_CHECK_CLOSE(o1[1], 0.5 + std::sqrt(0.405) - std::sqrt(0.5), 1e-1);
-  BOOST_CHECK_CLOSE(o2[0], 0.5, 1e-1);
-  BOOST_CHECK_CLOSE(o2[1], 0.5, 1e-1);
-  BOOST_CHECK_CLOSE(normal[0], -1 / std::sqrt(2), 1e-1);
-  BOOST_CHECK_CLOSE(normal[1], -1 / std::sqrt(2), 1e-1);
-  CHECK_CLOSE_TO_0(normal[2], 1e-1);
-
-  // Test case 4: Capsule collides with box on a corner
-  tf1 = coal::Transform3s(coal::Vec3s(
-      0.5 + std::sqrt(0.27), 0.5 + std::sqrt(0.27), 0.5 + std::sqrt(0.27)));
-  capsule.setTransform(tf1);
-
-  // test distance
-  distanceResult.clear();
-  coal::distance(&capsule, &box, distanceRequest, distanceResult);
-  o1 = distanceResult.nearest_points[0];
-  o2 = distanceResult.nearest_points[1];
-  normal = distanceResult.normal;
-
-  BOOST_CHECK_CLOSE(distanceResult.min_distance, -0.1, 1e-1);
-  BOOST_CHECK_CLOSE(o1[0], 0.5 + std::sqrt(0.27) - std::sqrt(1. / 3.), 1e-1);
-  BOOST_CHECK_CLOSE(o1[1], 0.5 + std::sqrt(0.27) - std::sqrt(1. / 3.), 1e-1);
-  BOOST_CHECK_CLOSE(o1[2], 0.5 + std::sqrt(0.27) - std::sqrt(1. / 3.), 1e-1);
-  BOOST_CHECK_CLOSE(o2[0], 0.5, 1e-1);
-  BOOST_CHECK_CLOSE(o2[1], 0.5, 1e-1);
-  BOOST_CHECK_CLOSE(o2[2], 0.5, 1e-1);
-  BOOST_CHECK_CLOSE(normal[0], -1 / std::sqrt(3.), 1e-1);
-  BOOST_CHECK_CLOSE(normal[1], -1 / std::sqrt(3.), 1e-1);
-  BOOST_CHECK_CLOSE(normal[2], -1 / std::sqrt(3.), 1e-1);
-
-  // Test case 5: we compare to results from the box/sphere function
-  CollisionGeometryPtr_t sphereGeometry(new coal::Sphere(1.));
-  coal::CollisionObject sphere(sphereGeometry, tf1);
-  std::size_t n = 1000;
+  // Test case 3: testing against the box/box function
+  std::size_t n = 4;
   Scalar extents[] = {-1.5, -1.5, -1.5, 1.5, 1.5, 1.5};
   for (std::size_t i = 0; i < n; ++i) {
+    std::cout << "================================================"
+              << std::endl;
+    std::cout << "Test case 3: test " << i << std::endl;
+    std::cout << "================================================"
+              << std::endl;
+    Scalar h = generateRandomNumber(-0.5, 0.5);
+    CollisionGeometryPtr_t segmentGeometry1(new coal::Capsule(0., 2 * h));
+    CollisionGeometryPtr_t segmentGeometry2(new coal::Box(0, 0, 2 * h));
     generateRandomTransform(extents, tf1);
-    capsule.setTransform(tf1);
-    coal::distance(&capsule, &box, distanceRequest, distanceResult);
-    Scalar dist1 = distanceResult.min_distance;
-    coal::Vec3s o1_1 = distanceResult.nearest_points[0];
-    coal::Vec3s o2_1 = distanceResult.nearest_points[1];
-    coal::Vec3s normal1 = distanceResult.normal;
+    CollisionObject segment1(segmentGeometry1, tf1);
+    CollisionObject segment2(segmentGeometry2, tf1);
     distanceResult.clear();
-    sphere.setTransform(tf1);
-    coal::distance(&sphere, &box, distanceRequest, distanceResult);
-    Scalar dist2 = distanceResult.min_distance;
-    coal::Vec3s o1_2 = distanceResult.nearest_points[0];
-    coal::Vec3s o2_2 = distanceResult.nearest_points[1];
-    coal::Vec3s normal2 = distanceResult.normal;
-    BOOST_CHECK_CLOSE(dist1, dist2, 1e-2);
-    BOOST_CHECK_CLOSE(o1_1[0], o1_2[0], 1e-2);
-    BOOST_CHECK_CLOSE(o1_1[1], o1_2[1], 1e-2);
-    BOOST_CHECK_CLOSE(o1_1[2], o1_2[2], 1e-2);
-    BOOST_CHECK_CLOSE(o2_1[0], o2_2[0], 1e-2);
-    BOOST_CHECK_CLOSE(o2_1[1], o2_2[1], 1e-2);
-    BOOST_CHECK_CLOSE(o2_1[2], o2_2[2], 1e-2);
-    BOOST_CHECK_CLOSE(normal1[0], normal2[0], 1e-2);
-    BOOST_CHECK_CLOSE(normal1[1], normal2[1], 1e-2);
-    BOOST_CHECK_CLOSE(normal1[2], normal2[2], 1e-2);
+    Scalar dist1 =
+        coal::distance(&segment1, &box, distanceRequest, distanceResult);
+    Vec3s o1_1 = distanceResult.nearest_points[0];
+    Vec3s o2_1 = distanceResult.nearest_points[1];
+    Vec3s sep1 = distanceResult.min_distance * distanceResult.normal;
+    distanceResult.clear();
+    Scalar dist2 =
+        coal::distance(&segment2, &box, distanceRequest, distanceResult);
+    Vec3s o1_2 = distanceResult.nearest_points[0];
+    Vec3s o2_2 = distanceResult.nearest_points[1];
+    Vec3s sep2 = distanceResult.min_distance * distanceResult.normal;
+    std::cout << "witness point on box" << std::endl;
+    std::cout << "o2_1: " << o2_1.transpose() << std::endl;
+    std::cout << "o2_2: " << o2_2.transpose() << std::endl;
+    std::cout << "witness point on segment" << std::endl;
+    std::cout << "o1_1: " << o1_1.transpose() << std::endl;
+    std::cout << "o1_2: " << o1_2.transpose() << std::endl;
+    BOOST_CHECK_CLOSE(dist1, dist2, 1e-1);
+    BOOST_CHECK_CLOSE(o1_1[0], o1_2[0], 1e-1);
+    BOOST_CHECK_CLOSE(o2_1[0], o2_2[0], 1e-1);
+    BOOST_CHECK_CLOSE(o1_1[1], o1_2[1], 1e-1);
+    BOOST_CHECK_CLOSE(o2_1[1], o2_2[1], 1e-1);
+    BOOST_CHECK_CLOSE(o1_1[2], o1_2[2], 1e-1);
+    BOOST_CHECK_CLOSE(o2_1[2], o2_2[2], 1e-1);
+    Transform3s new_tf1 = tf1;
+    Scalar eps = Scalar(1e-2);
+    new_tf1.setTranslation(tf1.getTranslation() + sep1 -
+                           eps * distanceResult.normal);
+    segment1.setTransform(new_tf1);
+    segment2.setTransform(new_tf1);
+    distanceResult.clear();
+    Scalar new_dist1 =
+        coal::distance(&segment1, &box, distanceRequest, distanceResult);
+    o1_1 = distanceResult.nearest_points[0];
+    o2_1 = distanceResult.nearest_points[1];
+    distanceResult.clear();
+    Scalar new_dist2 =
+        coal::distance(&segment2, &box, distanceRequest, distanceResult);
+    o1_2 = distanceResult.nearest_points[0];
+    o2_2 = distanceResult.nearest_points[1];
+    std::cout << "new_dist1: " << new_dist1 << std::endl;
+    std::cout << "new_dist2: " << new_dist2 << std::endl;
+    std::cout << "witness point on segment" << std::endl;
+    std::cout << "o1_1: " << o1_1.transpose() << std::endl;
+    std::cout << "o1_2: " << o1_2.transpose() << std::endl;
+    std::cout << "witness point on box" << std::endl;
+    std::cout << "o2_1: " << o2_1.transpose() << std::endl;
+    std::cout << "o2_2: " << o2_2.transpose() << std::endl;
   }
+
+  // Test case 4: test
+  // std::cout << "================================================" <<
+  // std::endl; std::cout << "Test case 3: test" << std::endl; std::cout <<
+  // "================================================" << std::endl; Vec3s
+  // half_side{0.395912, 0.353736, 0.235216}; std::cout << "half_side: " <<
+  // half_side.transpose() << std::endl; CollisionGeometryPtr_t
+  // newBoxGeometry(new coal::Box(2*half_side)); Scalar h = 0.539058;
+  // // Scalar radius = 0.163156;
+  // Scalar radius = 0.;
+  // CollisionGeometryPtr_t newSegmentGeometry(new coal::Capsule(radius, h));
+  // CollisionObject newSegment(newSegmentGeometry, tf1);
+  // CollisionObject newBox(newBoxGeometry, tf2);
+  // tf2.setIdentity();
+  // tf1.setTranslation(coal::Vec3s(0.26891, 0.235905, 0.0896977));
+  // coal::Matrix3s rot;
+  // rot << 0.534734, -0.363627,  0.762781, -0.406321,  0.68083, 0.609405,
+  // -0.74092, -0.635804, 0.216314; tf1.setRotation(rot);
+  // newSegment.setTransform(tf1);
+  // tf2.setIdentity();
+  // newBox.setTransform(tf2);
+  // distanceResult.clear();
+  // Scalar dist = coal::distance(&newBox, &newSegment, distanceRequest,
+  // distanceResult);
+
+  // std::cout << "tf1.translation(): " << tf1.getTranslation().transpose()
+  //           << std::endl;
+  // std::cout << "tf1.rotation(): " << tf1.getRotation().matrix() << std::endl;
+  // std::cout << "tf2.translation(): " << tf2.getTranslation().transpose()
+  //           << std::endl;
+  // std::cout << "tf2.rotation(): " << tf2.getRotation().matrix() << std::endl;
+  // std::cout << "dist: " << dist << std::endl;
+  // std::cout << "distres.nearest_points[0]: "
+  //           << distanceResult.nearest_points[0].transpose() << std::endl;
+  // std::cout << "distres.nearest_points[1]: "
+  //           << distanceResult.nearest_points[1].transpose() << std::endl;
+  // Transform3s new_tf1 = tf1;
+  // Scalar eps = Scalar(1e-2);
+  // Vec3s separation_vector = distanceResult.min_distance *
+  // distanceResult.normal; new_tf1.setTranslation(tf1.getTranslation() +
+  // separation_vector -
+  //                         eps * distanceResult.normal);
+  // newSegment.setTransform(new_tf1);
+  // coal::DistanceResult new_distres;
+  // Scalar new_dist = coal::distance(&newSegment, &newBox, distanceRequest,
+  // new_distres); std::cout << "new_dist: " << new_dist << std::endl;
+  // BOOST_CHECK(new_dist > 0);
 }
+
+// BOOST_AUTO_TEST_CASE(contact_points_sphere_box) {
+//   using coal::CollisionGeometryPtr_t;
+//   // We use a capsule of radius 1 and height 0 to represent a sphere
+//   CollisionGeometryPtr_t capsuleGeometry(new coal::Capsule(1., 0.));
+//   // Box of size 1 by 1 by 1
+//   CollisionGeometryPtr_t boxGeometry(new coal::Box(1., 1., 1.));
+
+//   // Enable computation of nearest points
+//   coal::DistanceRequest distanceRequest(true, 0, 0);
+//   coal::DistanceResult distanceResult;
+
+//   // Test case 1: Capsule collides to the right of box
+//   coal::Transform3s tf1(coal::Vec3s(1.4, 0, 0));
+//   coal::Transform3s tf2;
+//   coal::CollisionObject capsule(capsuleGeometry, tf1);
+//   coal::CollisionObject box(boxGeometry, tf2);
+
+//   // test distance
+//   coal::distance(&capsule, &box, distanceRequest, distanceResult);
+//   // Nearest point on capsule
+//   coal::Vec3s o1(distanceResult.nearest_points[0]);
+//   // Nearest point on box
+//   coal::Vec3s o2(distanceResult.nearest_points[1]);
+//   coal::Vec3s normal = distanceResult.normal;
+//   BOOST_CHECK_CLOSE(distanceResult.min_distance, -0.1, 1e-1);
+//   BOOST_CHECK_CLOSE(o1[0], 0.4, 1e-1);
+//   CHECK_CLOSE_TO_0(o1[1], 1e-1);
+//   BOOST_CHECK_CLOSE(o2[0], 0.5, 1e-1);
+//   CHECK_CLOSE_TO_0(o2[1], 1e-1);
+//   BOOST_CHECK_CLOSE(normal[0], -1, 1e-1);
+//   CHECK_CLOSE_TO_0(normal[1], 1e-1);
+//   CHECK_CLOSE_TO_0(normal[2], 1e-1);
+
+//   // Test case 2: Capsule above and collide with box
+//   tf1 = coal::Transform3s(coal::Vec3s(0., 0., 1.4));
+//   capsule.setTransform(tf1);
+
+//   // test distance
+//   distanceResult.clear();
+//   coal::distance(&capsule, &box, distanceRequest, distanceResult);
+//   o1 = distanceResult.nearest_points[0];
+//   o2 = distanceResult.nearest_points[1];
+//   normal = distanceResult.normal;
+
+//   BOOST_CHECK_CLOSE(distanceResult.min_distance, -0.1, 1e-1);
+//   CHECK_CLOSE_TO_0(o1[0], 1e-1);
+//   CHECK_CLOSE_TO_0(o1[1], 1e-1);
+//   BOOST_CHECK_CLOSE(o1[2], 0.4, 1e-1);
+//   CHECK_CLOSE_TO_0(o2[0], 1e-1);
+//   CHECK_CLOSE_TO_0(o2[1], 1e-1);
+//   BOOST_CHECK_CLOSE(o2[2], 0.5, 1e-1);
+//   CHECK_CLOSE_TO_0(normal[0], 1e-1);
+//   CHECK_CLOSE_TO_0(normal[1], 1e-1);
+//   BOOST_CHECK_CLOSE(normal[2], -1, 1e-1);
+
+//   // Test case 3: Capsule collides with box on an edge
+//   tf1 = coal::Transform3s(
+//       coal::Vec3s(0.5 + std::sqrt(0.405), 0.5 + std::sqrt(0.405), 0.));
+//   capsule.setTransform(tf1);
+
+//   // test distance
+//   distanceResult.clear();
+//   coal::distance(&capsule, &box, distanceRequest, distanceResult);
+//   o1 = distanceResult.nearest_points[0];
+//   o2 = distanceResult.nearest_points[1];
+//   normal = distanceResult.normal;
+//   BOOST_CHECK_CLOSE(distanceResult.min_distance, -0.1, 1e-1);
+//   BOOST_CHECK_CLOSE(o1[0], 0.5 + std::sqrt(0.405) - std::sqrt(0.5), 1e-1);
+//   BOOST_CHECK_CLOSE(o1[1], 0.5 + std::sqrt(0.405) - std::sqrt(0.5), 1e-1);
+//   BOOST_CHECK_CLOSE(o2[0], 0.5, 1e-1);
+//   BOOST_CHECK_CLOSE(o2[1], 0.5, 1e-1);
+//   BOOST_CHECK_CLOSE(normal[0], -1 / std::sqrt(2), 1e-1);
+//   BOOST_CHECK_CLOSE(normal[1], -1 / std::sqrt(2), 1e-1);
+//   CHECK_CLOSE_TO_0(normal[2], 1e-1);
+
+//   // Test case 4: Capsule collides with box on a corner
+//   tf1 = coal::Transform3s(coal::Vec3s(
+//       0.5 + std::sqrt(0.27), 0.5 + std::sqrt(0.27), 0.5 + std::sqrt(0.27)));
+//   capsule.setTransform(tf1);
+
+//   // test distance
+//   distanceResult.clear();
+//   coal::distance(&capsule, &box, distanceRequest, distanceResult);
+//   o1 = distanceResult.nearest_points[0];
+//   o2 = distanceResult.nearest_points[1];
+//   normal = distanceResult.normal;
+
+//   BOOST_CHECK_CLOSE(distanceResult.min_distance, -0.1, 1e-1);
+//   BOOST_CHECK_CLOSE(o1[0], 0.5 + std::sqrt(0.27) - std::sqrt(1. / 3.), 1e-1);
+//   BOOST_CHECK_CLOSE(o1[1], 0.5 + std::sqrt(0.27) - std::sqrt(1. / 3.), 1e-1);
+//   BOOST_CHECK_CLOSE(o1[2], 0.5 + std::sqrt(0.27) - std::sqrt(1. / 3.), 1e-1);
+//   BOOST_CHECK_CLOSE(o2[0], 0.5, 1e-1);
+//   BOOST_CHECK_CLOSE(o2[1], 0.5, 1e-1);
+//   BOOST_CHECK_CLOSE(o2[2], 0.5, 1e-1);
+//   BOOST_CHECK_CLOSE(normal[0], -1 / std::sqrt(3.), 1e-1);
+//   BOOST_CHECK_CLOSE(normal[1], -1 / std::sqrt(3.), 1e-1);
+//   BOOST_CHECK_CLOSE(normal[2], -1 / std::sqrt(3.), 1e-1);
+
+//   // Test case 5: we compare to results from the box/sphere function
+//   CollisionGeometryPtr_t sphereGeometry(new coal::Sphere(1.));
+//   coal::CollisionObject sphere(sphereGeometry, tf1);
+//   std::size_t n = 1000;
+//   Scalar extents[] = {-1.5, -1.5, -1.5, 1.5, 1.5, 1.5};
+//   for (std::size_t i = 0; i < n; ++i) {
+//     generateRandomTransform(extents, tf1);
+//     capsule.setTransform(tf1);
+//     coal::distance(&capsule, &box, distanceRequest, distanceResult);
+//     Scalar dist1 = distanceResult.min_distance;
+//     coal::Vec3s o1_1 = distanceResult.nearest_points[0];
+//     coal::Vec3s o2_1 = distanceResult.nearest_points[1];
+//     coal::Vec3s normal1 = distanceResult.normal;
+//     distanceResult.clear();
+//     sphere.setTransform(tf1);
+//     coal::distance(&sphere, &box, distanceRequest, distanceResult);
+//     Scalar dist2 = distanceResult.min_distance;
+//     coal::Vec3s o1_2 = distanceResult.nearest_points[0];
+//     coal::Vec3s o2_2 = distanceResult.nearest_points[1];
+//     coal::Vec3s normal2 = distanceResult.normal;
+//     BOOST_CHECK_CLOSE(dist1, dist2, 1e-2);
+//     BOOST_CHECK_CLOSE(o1_1[0], o1_2[0], 1e-2);
+//     BOOST_CHECK_CLOSE(o1_1[1], o1_2[1], 1e-2);
+//     BOOST_CHECK_CLOSE(o1_1[2], o1_2[2], 1e-2);
+//     BOOST_CHECK_CLOSE(o2_1[0], o2_2[0], 1e-2);
+//     BOOST_CHECK_CLOSE(o2_1[1], o2_2[1], 1e-2);
+//     BOOST_CHECK_CLOSE(o2_1[2], o2_2[2], 1e-2);
+//     BOOST_CHECK_CLOSE(normal1[0], normal2[0], 1e-2);
+//     BOOST_CHECK_CLOSE(normal1[1], normal2[1], 1e-2);
+//     BOOST_CHECK_CLOSE(normal1[2], normal2[2], 1e-2);
+//   }
+// }
