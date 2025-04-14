@@ -82,7 +82,7 @@ BOOST_AUTO_TEST_CASE(distance_capsule_box) {
 
   // Test case 1: Capsule to the right of box
   coal::Transform3s tf1(coal::Vec3s(3., 0, 0));
-  coal::Transform3s tf2;
+  coal::Transform3s tf2 = coal::Transform3s::Identity();
   coal::CollisionObject capsule(capsuleGeometry, tf1);
   coal::CollisionObject box(boxGeometry, tf2);
 
@@ -294,4 +294,36 @@ BOOST_AUTO_TEST_CASE(contact_points_sphere_box) {
   BOOST_CHECK_CLOSE(normal[0], -1 / std::sqrt(3.), 1e-1);
   BOOST_CHECK_CLOSE(normal[1], -1 / std::sqrt(3.), 1e-1);
   BOOST_CHECK_CLOSE(normal[2], -1 / std::sqrt(3.), 1e-1);
+
+  // Test case 5: we compare to results from the box/sphere function
+  CollisionGeometryPtr_t sphereGeometry(new coal::Sphere(1.));
+  coal::CollisionObject sphere(sphereGeometry, tf1);
+  std::size_t n = 1000;
+  Scalar extents[] = {-1.5, -1.5, -1.5, 1.5, 1.5, 1.5};
+  for (std::size_t i = 0; i < n; ++i) {
+    generateRandomTransform(extents, tf1);
+    capsule.setTransform(tf1);
+    coal::distance(&capsule, &box, distanceRequest, distanceResult);
+    Scalar dist1 = distanceResult.min_distance;
+    coal::Vec3s o1_1 = distanceResult.nearest_points[0];
+    coal::Vec3s o2_1 = distanceResult.nearest_points[1];
+    coal::Vec3s normal1 = distanceResult.normal;
+    distanceResult.clear();
+    sphere.setTransform(tf1);
+    coal::distance(&sphere, &box, distanceRequest, distanceResult);
+    Scalar dist2 = distanceResult.min_distance;
+    coal::Vec3s o1_2 = distanceResult.nearest_points[0];
+    coal::Vec3s o2_2 = distanceResult.nearest_points[1];
+    coal::Vec3s normal2 = distanceResult.normal;
+    BOOST_CHECK_CLOSE(dist1, dist2, 1e-2);
+    BOOST_CHECK_CLOSE(o1_1[0], o1_2[0], 1e-2);
+    BOOST_CHECK_CLOSE(o1_1[1], o1_2[1], 1e-2);
+    BOOST_CHECK_CLOSE(o1_1[2], o1_2[2], 1e-2);
+    BOOST_CHECK_CLOSE(o2_1[0], o2_2[0], 1e-2);
+    BOOST_CHECK_CLOSE(o2_1[1], o2_2[1], 1e-2);
+    BOOST_CHECK_CLOSE(o2_1[2], o2_2[2], 1e-2);
+    BOOST_CHECK_CLOSE(normal1[0], normal2[0], 1e-2);
+    BOOST_CHECK_CLOSE(normal1[1], normal2[1], 1e-2);
+    BOOST_CHECK_CLOSE(normal1[2], normal2[2], 1e-2);
+  }
 }
