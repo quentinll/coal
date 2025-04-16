@@ -40,7 +40,6 @@
 #include <../src/collision_node.h>
 #include "coal/internal/shape_shape_func.h"
 #include "coal/internal/traversal_node_setup.h"
-#include "coal/internal/shape_shape_func.h"
 #include <../src/traits_traversal.h>
 
 namespace coal {
